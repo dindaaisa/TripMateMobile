@@ -2,21 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:tripmate_mobile/screens/onboarding_screen.dart';
 
 void main() {
-  runApp(const FigmaToCodeApp());
+  runApp(const TripMateApp());
 }
 
-class FigmaToCodeApp extends StatelessWidget {
-  const FigmaToCodeApp({super.key});
+class TripMateApp extends StatelessWidget {
+  const TripMateApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
-      ),
-      home: const Scaffold(
-        body: OnBoardingLogo(),
-      ),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.light(), // karena desain putih
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const OnBoardingScreen(),
+        //'/login': (context) => const LoginScreen(),
+      },
     );
   }
 }
