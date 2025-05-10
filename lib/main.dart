@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tripmate_mobile/screens/onboarding_screen.dart';
+import 'package:tripmate_mobile/screens/login_screen.dart';
 
 void main() {
   runApp(const TripMateApp());
@@ -16,7 +17,7 @@ class TripMateApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const OnBoardingScreen(),
-        //'/login': (context) => const LoginScreen(),
+        '/login': (context) => const LoginScreen(),
       },
     );
   }

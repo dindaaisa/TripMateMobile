@@ -13,8 +13,6 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
 
   void _nextPage() {
     final int totalPages = 3;
-
-    // Gunakan nilai page yang real-time, bukan _currentPage
     final int currentPage = _pageController.page?.round() ?? _currentPage;
 
     if (currentPage < totalPages - 1) {
@@ -49,18 +47,25 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   }
 }
 
-// Halaman Logo Splash
-class OnBoardingLogo extends StatelessWidget {
+// Halaman Logo Splash - Otomatis lanjut setelah 2 detik
+class OnBoardingLogo extends StatefulWidget {
   final VoidCallback onNext;
 
   const OnBoardingLogo({super.key, required this.onNext});
 
   @override
-  Widget build(BuildContext context) {
-    Future.delayed(const Duration(seconds: 2), () {
-      onNext();
-    });
+  State<OnBoardingLogo> createState() => _OnBoardingLogoState();
+}
 
+class _OnBoardingLogoState extends State<OnBoardingLogo> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), widget.onNext); // Auto splash
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
       child: const Center(
@@ -77,7 +82,8 @@ class OnBoardingLogo extends StatelessWidget {
   }
 }
 
-// Halaman 1
+
+// Halaman 1 - Hanya lanjut jika tombol ditekan
 class OnBoardingLanjut extends StatelessWidget {
   final VoidCallback onNext;
 
@@ -104,18 +110,19 @@ class OnBoardingLanjut extends StatelessWidget {
             right: 16,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: const [
+                SizedBox(height: 16), // Tambahkan ini
                 Row(
                   children: [
-                    _indicator(true),
-                    const SizedBox(width: 8),
-                    _indicator(false),
-                    const SizedBox(width: 8),
-                    _indicator(false),
+                    _PageIndicator(isActive: true),
+                    SizedBox(width: 8),
+                    _PageIndicator(isActive: false),
+                    SizedBox(width: 8),
+                    _PageIndicator(isActive: false),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const Text(
+                SizedBox(height: 12),
+                Text(
                   'Siap jalan-jalan dan ciptakan pengalaman seru?',
                   style: TextStyle(
                     fontSize: 24,
@@ -123,13 +130,10 @@ class OnBoardingLanjut extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
+                SizedBox(height: 12),
+                Text(
                   'Dengan TripMate, atur perjalananmu jadi lebih gampang dan menyenangkan.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF71727A),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF71727A)),
                 ),
               ],
             ),
@@ -159,20 +163,9 @@ class OnBoardingLanjut extends StatelessWidget {
       ),
     );
   }
-
-  Widget _indicator(bool isActive) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFDC2626) : const Color(0xFFABB2BE),
-        shape: BoxShape.circle,
-      ),
-    );
-  }
 }
 
-// Halaman 2
+// Halaman 2 - Hanya lanjut jika tombol ditekan
 class OnBoardingMulai extends StatelessWidget {
   final VoidCallback onNext;
 
@@ -198,33 +191,31 @@ class OnBoardingMulai extends StatelessWidget {
             left: 16,
             right: 16,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _indicator(false),
-                    const SizedBox(width: 8),
-                    _indicator(true),
-                    const SizedBox(width: 8),
-                    _indicator(false),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Rencanain trip tanpa ribet bareng TripMate!',
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              SizedBox(height: 16), // Tambahkan ini
+              Row(
+                children: [
+                  _PageIndicator(isActive: false),
+                  SizedBox(width: 8),
+                  _PageIndicator(isActive: true),
+                  SizedBox(width: 8),
+                  _PageIndicator(isActive: false),
+                ],
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Rencanain trip tanpa ribet bareng TripMate!',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
+                SizedBox(height: 12),
+                Text(
                   'Cukup beberapa langkah, dan liburan impianmu siap dijalankan.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF71727A),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF71727A)),
                 ),
               ],
             ),
@@ -254,8 +245,16 @@ class OnBoardingMulai extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _indicator(bool isActive) {
+// Widget indikator halaman (dipakai berulang)
+class _PageIndicator extends StatelessWidget {
+  final bool isActive;
+
+  const _PageIndicator({super.key, required this.isActive});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: 8,
       height: 8,
@@ -266,4 +265,3 @@ class OnBoardingMulai extends StatelessWidget {
     );
   }
 }
-
