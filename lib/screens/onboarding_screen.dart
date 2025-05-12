@@ -82,8 +82,7 @@ class _OnBoardingLogoState extends State<OnBoardingLogo> {
   }
 }
 
-
-// Halaman 1 - Hanya lanjut jika tombol ditekan
+// Halaman 1 - Lanjut
 class OnBoardingLanjut extends StatelessWidget {
   final VoidCallback onNext;
 
@@ -111,12 +110,10 @@ class OnBoardingLanjut extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                SizedBox(height: 16), // Tambahkan ini
+                SizedBox(height: 16),
                 Row(
                   children: [
                     _PageIndicator(isActive: true),
-                    SizedBox(width: 8),
-                    _PageIndicator(isActive: false),
                     SizedBox(width: 8),
                     _PageIndicator(isActive: false),
                   ],
@@ -165,7 +162,7 @@ class OnBoardingLanjut extends StatelessWidget {
   }
 }
 
-// Halaman 2 - Hanya lanjut jika tombol ditekan
+// Halaman 2 - Mulai
 class OnBoardingMulai extends StatelessWidget {
   final VoidCallback onNext;
 
@@ -191,21 +188,19 @@ class OnBoardingMulai extends StatelessWidget {
             left: 16,
             right: 16,
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              SizedBox(height: 16), // Tambahkan ini
-              Row(
-                children: [
-                  _PageIndicator(isActive: false),
-                  SizedBox(width: 8),
-                  _PageIndicator(isActive: true),
-                  SizedBox(width: 8),
-                  _PageIndicator(isActive: false),
-                ],
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Rencanain trip tanpa ribet bareng TripMate!',
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                SizedBox(height: 16),
+                Row(
+                  children: [
+                    _PageIndicator(isActive: false),
+                    SizedBox(width: 8),
+                    _PageIndicator(isActive: true),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Rencanain trip tanpa ribet bareng TripMate!',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -247,7 +242,7 @@ class OnBoardingMulai extends StatelessWidget {
   }
 }
 
-// Widget indikator halaman (dipakai berulang)
+// Indikator halaman (lingkaran kecil)
 class _PageIndicator extends StatelessWidget {
   final bool isActive;
 

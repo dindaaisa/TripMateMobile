@@ -121,8 +121,8 @@ class LoginScreen extends StatelessWidget {
                     child: RichText(
                       text: TextSpan(
                         text: 'Bukan anggota? ',
-                        style: TextStyle(
-                          color: const Color(0xFF8F98A8),
+                        style: const TextStyle(
+                          color: Color(0xFF8F98A8),
                           fontSize: 12,
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w400,
@@ -130,20 +130,21 @@ class LoginScreen extends StatelessWidget {
                         children: [
                           TextSpan(
                             text: 'Daftar sekarang',
-                            style: TextStyle(
-                              color: const Color(0xFFDC2626),
+                            style: const TextStyle(
+                              color: Color(0xFFDC2626),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                // Navigasi ke layar daftar
+                                Navigator.pushNamed(context, '/signup');
                               },
                           ),
                         ],
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
                   Container(
                     height: 5,
