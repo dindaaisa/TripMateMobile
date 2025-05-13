@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:tripmate_mobile/models/user_model.dart'; // Ganti path sesuai lokasi model Hive
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -17,9 +19,31 @@ class _SignupScreenState extends State<SignupScreen> {
   bool hidePassword = true;
   bool hideConfirmPassword = true;
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate() && agreeToPolicy) {
-      print("Name: ${nameController.text}");
+      final name = nameController.text.trim();
+      final email = emailController.text.trim();
+      final password = passwordController.text.trim();
+
+      final box = Hive.box<UserModel>('users');
+
+      // Cek apakah email sudah digunakan
+      final isDuplicate = box.values.any((user) => user.email == email);
+      if (isDuplicate) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email sudah digunakan')),
+        );
+        return;
+      }
+
+      final newUser = UserModel(name: name, email: email, password: password);
+      await box.add(newUser);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pendaftaran berhasil! Silakan login.')),
+      );
+
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -30,7 +54,6 @@ class _SignupScreenState extends State<SignupScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Tombol kembali
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
@@ -38,8 +61,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-
-            // Scrollable Form
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -48,17 +69,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Daftar',
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+                      const Text('Daftar', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
                       const SizedBox(height: 4),
-                      const Text('Buat akun untuk mulai TripMate!',
-                          style: TextStyle(fontSize: 16)),
+                      const Text('Buat akun untuk mulai TripMate!', style: TextStyle(fontSize: 16)),
                       const SizedBox(height: 24),
 
-                      const Text(
-                        'Nama',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
+                      const Text('Nama', style: TextStyle(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: nameController,
@@ -67,10 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      const Text(
-                        'Alamat Email',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
+                      const Text('Alamat Email', style: TextStyle(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: emailController,
@@ -79,10 +92,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      const Text(
-                        'Sandi',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
+                      const Text('Sandi', style: TextStyle(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: passwordController,
@@ -102,14 +112,11 @@ class _SignupScreenState extends State<SignupScreen> {
                         obscureText: hideConfirmPassword,
                         decoration: _inputDecoration('Konfirmasi sandi').copyWith(
                           suffixIcon: IconButton(
-                            icon: Icon(
-                                hideConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () =>
-                                setState(() => hideConfirmPassword = !hideConfirmPassword),
+                            icon: Icon(hideConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                            onPressed: () => setState(() => hideConfirmPassword = !hideConfirmPassword),
                           ),
                         ),
-                        validator: (value) =>
-                            value != passwordController.text ? 'Password tidak cocok' : null,
+                        validator: (value) => value != passwordController.text ? 'Password tidak cocok' : null,
                       ),
                       const SizedBox(height: 16),
 
@@ -117,9 +124,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         children: [
                           Checkbox(
                             value: agreeToPolicy,
-                            onChanged: (value) {
-                              setState(() => agreeToPolicy = value!);
-                            },
+                            onChanged: (value) => setState(() => agreeToPolicy = value!),
                           ),
                           Expanded(
                             child: Text.rich(
@@ -163,8 +168,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
             ),
-
-            // Footer tetap di bawah layar
             Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: Column(
@@ -188,7 +191,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     height: 5,
                     width: 134,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF141414),
+                      color: Color(0xFF141414),
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),

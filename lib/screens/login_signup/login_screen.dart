@@ -1,8 +1,39 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:tripmate_mobile/models/user_model.dart'; // Ganti ini sesuai path
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  void _login() async {
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
+
+  final box = Hive.box<UserModel>('users');
+  final users = box.values.toList();
+
+  final matchedUser = users.where(
+    (user) => user.email == email && user.password == password,
+  ).toList();
+
+  if (matchedUser.isNotEmpty) {
+    Navigator.pushReplacementNamed(context, '/home');
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Email atau kata sandi salah')),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +42,6 @@ class LoginScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Konten utama (TripMate, form login)
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -24,17 +54,17 @@ class LoginScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 60),
-                        Text(
+                        const Text(
                           'TripMate',
                           style: TextStyle(
-                            color: const Color(0xFFDC2626),
+                            color: Color(0xFFDC2626),
                             fontSize: 48,
                             fontFamily: 'Montserrat',
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 48),
-                        Align(
+                        const Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Masuk',
@@ -48,6 +78,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         TextField(
+                          controller: _emailController,
                           decoration: InputDecoration(
                             hintText: 'Alamat email',
                             border: OutlineInputBorder(
@@ -58,6 +89,7 @@ class LoginScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         TextField(
+                          controller: _passwordController,
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: 'Kata sandi',
@@ -65,16 +97,16 @@ class LoginScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                            suffixIcon: Icon(Icons.visibility_off, color: Color(0xFF8F9098)),
+                            suffixIcon: const Icon(Icons.visibility_off, color: Color(0xFF8F9098)),
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Align(
+                        const Align(
                           alignment: Alignment.centerRight,
                           child: Text(
                             'Lupakan kata sandi?',
                             style: TextStyle(
-                              color: const Color(0xFFDC2626),
+                              color: Color(0xFFDC2626),
                               fontSize: 12,
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w600,
@@ -92,10 +124,8 @@ class LoginScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            onPressed: () {
-                              // aksi tombol Masuk
-                            },
-                            child: Text(
+                            onPressed: _login,
+                            child: const Text(
                               'Masuk',
                               style: TextStyle(
                                 color: Colors.white,
@@ -111,8 +141,6 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Bagian bawah (text & garis hitam)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Column(
@@ -144,7 +172,6 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
                   Container(
                     height: 5,
