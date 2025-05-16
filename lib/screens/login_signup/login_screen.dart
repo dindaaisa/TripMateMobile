@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tripmate_mobile/models/user_model.dart'; // Ganti ini sesuai path
+import 'package:tripmate_mobile/models/user_model.dart'; // Sesuaikan path
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,27 +13,52 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   void _login() async {
-  final email = _emailController.text.trim();
-  final password = _passwordController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-  final box = Hive.box<UserModel>('users');
-  final users = box.values.toList();
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email dan kata sandi wajib diisi')),
+      );
+      return;
+    }
 
-  final matchedUser = users.where(
-    (user) => user.email == email && user.password == password,
-  ).toList();
+    setState(() {
+      _isLoading = true;
+    });
 
-  if (matchedUser.isNotEmpty) {
-    Navigator.pushReplacementNamed(context, '/home');
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Email atau kata sandi salah')),
-    );
+    try {
+      final box = Hive.box<UserModel>('users');
+      final users = box.values.toList();
+
+      final matchedUser = users.firstWhere(
+        (user) => user.email == email && user.password == password,
+        orElse: () => UserModel(name: '', email: '', password: '', role: ''),
+      );
+
+      if (matchedUser.email.isNotEmpty) {
+        // Sukses login
+        print('Login berhasil: ${matchedUser.email}, role: ${matchedUser.role}');
+        Navigator.pushReplacementNamed(context, '/home'); // atau '/dashboard' berdasarkan role
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email atau kata sandi salah')),
+        );
+      }
+    } catch (e) {
+      print('Login error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan saat login')),
+      );
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 16),
                         TextField(
                           controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             hintText: 'Alamat email',
                             border: OutlineInputBorder(
@@ -97,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                            suffixIcon: const Icon(Icons.visibility_off, color: Color(0xFF8F9098)),
+                            suffixIcon: const Icon(Icons.lock_outline, color: Color(0xFF8F9098)),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -124,15 +150,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            onPressed: _login,
-                            child: const Text(
-                              'Masuk',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            onPressed: _isLoading ? null : _login,
+                            child: _isLoading
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text(
+                                    'Masuk',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],

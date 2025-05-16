@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tripmate_mobile/models/user_model.dart'; // Ganti path sesuai lokasi model Hive
+import 'package:tripmate_mobile/models/user_model.dart'; // Sesuaikan path sesuai struktur proyek
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -15,6 +15,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+
   bool agreeToPolicy = false;
   bool hidePassword = true;
   bool hideConfirmPassword = true;
@@ -27,7 +28,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       final box = Hive.box<UserModel>('users');
 
-      // Cek apakah email sudah digunakan
+      // Cek duplikat email
       final isDuplicate = box.values.any((user) => user.email == email);
       if (isDuplicate) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -36,8 +37,18 @@ class _SignupScreenState extends State<SignupScreen> {
         return;
       }
 
-      final newUser = UserModel(name: name, email: email, password: password);
+      // Tambahkan user baru
+      final newUser = UserModel(
+        name: name,
+        email: email,
+        password: password,
+        role: 'user',
+      );
       await box.add(newUser);
+
+      // Debug
+      print("User baru ditambahkan: ${newUser.email}");
+      print("Jumlah total user di Hive: ${box.length}");
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pendaftaran berhasil! Silakan login.')),
@@ -88,7 +99,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       TextFormField(
                         controller: emailController,
                         decoration: _inputDecoration('Alamat email'),
-                        validator: (value) => value!.isEmpty ? 'Email wajib diisi' : null,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Email wajib diisi';
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$').hasMatch(value)) {
+                            return 'Email tidak valid';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
