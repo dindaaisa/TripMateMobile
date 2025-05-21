@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'models/user_model.dart';
 
-// Screens
+// Screens umum
 import 'package:tripmate_mobile/screens/onboarding/onboarding_screen.dart';
 import 'package:tripmate_mobile/screens/login_signup/login_screen.dart';
 import 'package:tripmate_mobile/screens/login_signup/signup_screen.dart';
-import 'package:tripmate_mobile/screens/navigation_bar.dart';
-import 'package:tripmate_mobile/screens/destinasi/destinasi.dart';
-import 'package:tripmate_mobile/screens/rencana/rencana.dart';
-import 'package:tripmate_mobile/screens/riwayat/riwayat.dart';
-import 'package:tripmate_mobile/screens/profil/profil.dart';
+import 'package:tripmate_mobile/widgets/home_navigation.dart'; // ✅ Tambahkan ini
+// import 'package:tripmate_mobile/screens/destinasi/destinasi.dart';
+// import 'package:tripmate_mobile/screens/rencana/rencana.dart';
+// import 'package:tripmate_mobile/screens/riwayat/riwayat.dart';
+// import 'package:tripmate_mobile/screens/profil/profil.dart';
+
+// Screen admin
+import 'admin/main_admin_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,11 +23,10 @@ void main() async {
 
   var userBox = await Hive.openBox<UserModel>('users');
 
-  // Debug print
   print("Jumlah user di Hive saat startup: ${userBox.length}");
 
   if (userBox.isEmpty) {
-    await userBox.addAll([
+    userBox.addAll([
       UserModel(
         name: 'Admin',
         email: 'admin@gmail.com',
@@ -38,7 +40,7 @@ void main() async {
         role: 'user',
       ),
     ]);
-    print("Akun default berhasil ditambahkan (${userBox.length} total user)");
+    print("Akun default ditambahkan");
   }
 
   runApp(const TripMateApp());
@@ -57,10 +59,13 @@ class TripMateApp extends StatelessWidget {
         '/': (context) => const OnBoardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
-        '/home': (context) => const DestinasiScreen(),
-        '/rencana': (context) => const RencanaScreen(),
-        '/riwayat': (context) => const RiwayatScreen(),
-        '/profil': (context) => const ProfilScreen(),
+        '/home': (context) => const HomeNavigation(), // ✅ Ini diganti
+        '/adminHome': (context) => const MainAdminScreen(),
+
+        // // Opsional: bisa diakses langsung tanpa navbar
+        // '/rencana': (context) => const RencanaScreen(),
+        // '/riwayat': (context) => const RiwayatScreen(),
+        // '/profil': (context) => const ProfilScreen(),
       },
     );
   }

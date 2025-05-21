@@ -40,9 +40,13 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (matchedUser.email.isNotEmpty) {
-        // Sukses login
+        // Sukses login, arahkan berdasarkan role
         print('Login berhasil: ${matchedUser.email}, role: ${matchedUser.role}');
-        Navigator.pushReplacementNamed(context, '/home'); // atau '/dashboard' berdasarkan role
+        if (matchedUser.role == 'admin') {
+          Navigator.pushReplacementNamed(context, '/adminHome');
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Email atau kata sandi salah')),

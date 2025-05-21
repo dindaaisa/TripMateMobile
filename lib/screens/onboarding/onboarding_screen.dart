@@ -97,7 +97,7 @@ class OnBoardingLanjut extends StatelessWidget {
           Positioned(
             top: 0,
             child: Image.asset(
-              "assets/onboarding1.jpg",
+              "assets/pics/onboarding1.jpg",
               width: 411,
               height: 569,
               fit: BoxFit.cover,
@@ -177,7 +177,7 @@ class OnBoardingMulai extends StatelessWidget {
           Positioned(
             top: 0,
             child: Image.asset(
-              "assets/onboarding2.jpg",
+              "assets/pics/onboarding2.jpg",
               width: 411,
               height: 569,
               fit: BoxFit.cover,

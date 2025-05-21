@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tripmate_mobile/models/user_model.dart'; // Sesuaikan path sesuai struktur proyek
+import 'package:tripmate_mobile/models/user_model.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -20,6 +20,8 @@ class _SignupScreenState extends State<SignupScreen> {
   bool hidePassword = true;
   bool hideConfirmPassword = true;
 
+  String selectedRole = 'user'; // Default role
+
   void _submitForm() async {
     if (_formKey.currentState!.validate() && agreeToPolicy) {
       final name = nameController.text.trim();
@@ -37,18 +39,13 @@ class _SignupScreenState extends State<SignupScreen> {
         return;
       }
 
-      // Tambahkan user baru
       final newUser = UserModel(
         name: name,
         email: email,
         password: password,
-        role: 'user',
+        role: selectedRole,
       );
       await box.add(newUser);
-
-      // Debug
-      print("User baru ditambahkan: ${newUser.email}");
-      print("Jumlah total user di Hive: ${box.length}");
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pendaftaran berhasil! Silakan login.')),
@@ -134,6 +131,23 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                         validator: (value) => value != passwordController.text ? 'Password tidak cocok' : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      const Text('Daftar Sebagai', style: TextStyle(fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        value: selectedRole,
+                        items: const [
+                          DropdownMenuItem(value: 'user', child: Text('User')),
+                          DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            selectedRole = value!;
+                          });
+                        },
+                        decoration: _inputDecoration('Pilih role'),
                       ),
                       const SizedBox(height: 16),
 
