@@ -28,7 +28,7 @@ class AkunPage extends StatelessWidget {
       );
 
       // Navigasi ke login dan hapus semua route sebelumnya
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     }
   }
 

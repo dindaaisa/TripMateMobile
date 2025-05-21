@@ -1,46 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+// Models
 import 'models/user_model.dart';
+import 'models/landing_page_model.dart';
 
 // Screens umum
 import 'package:tripmate_mobile/screens/onboarding/onboarding_screen.dart';
 import 'package:tripmate_mobile/screens/login_signup/login_screen.dart';
 import 'package:tripmate_mobile/screens/login_signup/signup_screen.dart';
-import 'package:tripmate_mobile/widgets/home_navigation.dart'; // ✅ Tambahkan ini
-// import 'package:tripmate_mobile/screens/destinasi/destinasi.dart';
-// import 'package:tripmate_mobile/screens/rencana/rencana.dart';
-// import 'package:tripmate_mobile/screens/riwayat/riwayat.dart';
-// import 'package:tripmate_mobile/screens/profil/profil.dart';
+import 'package:tripmate_mobile/widgets/home_navigation.dart';
 
-// Screen admin
+// Screens admin
 import 'admin/main_admin_screen.dart';
+import 'admin/pages/dashboard_page.dart';
+import 'admin/pages/ubah_landing_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
-  Hive.registerAdapter(UserModelAdapter());
 
-  var userBox = await Hive.openBox<UserModel>('users');
+  // Registrasi adapter jika belum
+  if (!Hive.isAdapterRegistered(UserModelAdapter().typeId)) {
+    Hive.registerAdapter(UserModelAdapter());
+  }
+  if (!Hive.isAdapterRegistered(LandingPageModelAdapter().typeId)) {
+    Hive.registerAdapter(LandingPageModelAdapter());
+  }
 
-  print("Jumlah user di Hive saat startup: ${userBox.length}");
+  // Buka box hanya jika belum dibuka
+  if (!Hive.isBoxOpen('users')) {
+    await Hive.openBox<UserModel>('users');
+  }
+  if (!Hive.isBoxOpen('landingPageBox')) {
+    await Hive.openBox<LandingPageModel>('landingPageBox');
+  }
+
+  var userBox = Hive.box<UserModel>('users');
+  var landingPageBox = Hive.box<LandingPageModel>('landingPageBox');
 
   if (userBox.isEmpty) {
     userBox.addAll([
-      UserModel(
-        name: 'Admin',
-        email: 'admin@gmail.com',
-        password: 'admin123',
-        role: 'admin',
-      ),
-      UserModel(
-        name: 'Dinda Aisa',
-        email: 'user1',
-        password: '12345678',
-        role: 'user',
-      ),
+      UserModel(name: 'Admin', email: 'admin@gmail.com', password: 'admin123', role: 'admin'),
+      UserModel(name: 'Dinda Aisa', email: 'user1', password: '12345678', role: 'user'),
     ]);
-    print("Akun default ditambahkan");
+    print("✅ Akun default ditambahkan");
+  }
+
+  if (landingPageBox.isEmpty) {
+    landingPageBox.putAll({
+      0: LandingPageModel(
+        title: 'Siap jalan-jalan dan ciptakan pengalaman seru?',
+        description: 'Dengan TripMate, atur perjalananmu jadi lebih gampang dan menyenangkan.',
+        imageBytes: null,
+      ),
+      1: LandingPageModel(
+        title: 'Rencanain trip tanpa ribet bareng TripMate!',
+        description: 'Cukup beberapa langkah, dan liburan impianmu siap dijalankan.',
+        imageBytes: null,
+      ),
+    });
+    print("✅ Konten default landing page ditambahkan");
   }
 
   runApp(const TripMateApp());
@@ -59,13 +80,10 @@ class TripMateApp extends StatelessWidget {
         '/': (context) => const OnBoardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
-        '/home': (context) => const HomeNavigation(), // ✅ Ini diganti
+        '/home': (context) => const HomeNavigation(),
         '/adminHome': (context) => const MainAdminScreen(),
-
-        // // Opsional: bisa diakses langsung tanpa navbar
-        // '/rencana': (context) => const RencanaScreen(),
-        // '/riwayat': (context) => const RiwayatScreen(),
-        // '/profil': (context) => const ProfilScreen(),
+        '/dashboard': (context) => const DashboardPage(),
+        '/ubahLandingPage': (context) => const UbahLandingPage(),
       },
     );
   }

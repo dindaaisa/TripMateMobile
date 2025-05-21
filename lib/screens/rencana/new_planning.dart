@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class NewPlanningPageBody extends StatefulWidget {
+
   final Function(Map<String, String> plan, int? editingIndex) onSave;
 
   const NewPlanningPageBody({super.key, required this.onSave});
-
   @override
   State<NewPlanningPageBody> createState() => _NewPlanningPageBodyState();
 }
@@ -24,6 +24,7 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
   String? _selectedDestination;
 
   int? _editingIndex;
+  List<Map<String, String>> _plans = [];
 
   @override
   void dispose() {
@@ -66,22 +67,22 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi Simpan'),
+        title: const Text('Konfirmasi'),
         content: Text(_editingIndex == null
-            ? 'Yakin ingin menyimpan rencana baru ini?'
-            : 'Yakin ingin menyimpan perubahan rencana ini?'),
+            ? 'Simpan rencana baru?'
+            : 'Simpan perubahan rencana?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xffdc2626),
               foregroundColor: Colors.white,
-              backgroundColor: const Color(0xffdc2626),
             ),
-            child: const Text('Ya, Simpan'),
+            child: const Text('Ya, Simpan', ),
           ),
         ],
       ),
@@ -99,8 +100,69 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
       'people': _numberOfPeopleController.text,
     };
 
-    widget.onSave(plan, _editingIndex);
-    Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
+    setState(() {
+      if (_editingIndex == null) {
+        _plans.add(plan);
+      } else {
+        _plans[_editingIndex!] = plan;
+        _editingIndex = null;
+      }
+      _clearForm();
+    });
+  }
+
+  void _clearForm() {
+    _tripNameController.clear();
+    _originCityController.clear();
+    _destinationCityController.clear();
+    _tripDateController.clear();
+    _endDateController.clear();
+    _totalDaysController.clear();
+    _numberOfPeopleController.clear();
+    _selectedOrigin = null;
+    _selectedDestination = null;
+  }
+
+  void _editPlan(int index) {
+    final plan = _plans[index];
+    setState(() {
+      _editingIndex = index;
+      _tripNameController.text = plan['name']!;
+      _originCityController.text = plan['origin']!;
+      _destinationCityController.text = plan['destination']!;
+      _tripDateController.text = plan['start date']!;
+      _endDateController.text = plan['end date']!;
+      _totalDaysController.text = plan['sum date']!;
+      _numberOfPeopleController.text = plan['people']!;
+      _selectedOrigin = plan['origin'];
+      _selectedDestination = plan['destination'];
+    });
+  }
+
+  void _deletePlan(int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Hapus Rencana'),
+        content: const Text('Yakin ingin menghapus rencana ini?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xffdc2626)),
+            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+          )
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        _plans.removeAt(index);
+        _editingIndex = null;
+        _clearForm();
+      });
+    }
   }
 
   Widget _buildTextField({
@@ -110,6 +172,7 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     VoidCallback? onTap,
   }) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -136,104 +199,13 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Rencana Baru"),
-        backgroundColor: const Color(0xffdc2626),
-        foregroundColor: Colors.white,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildTextField(hint: 'Nama Perjalanan', icon: Icons.description_outlined, controller: _tripNameController),
-                  const SizedBox(height: 18),
-                  _buildDropdownField('Asal Kota', _selectedOrigin, (val) {
-                    setState(() {
-                      _selectedOrigin = val;
-                      _originCityController.text = val!;
-                    });
-                  }),
-                  const SizedBox(height: 16),
-                  _buildDropdownField('Kota Tujuan', _selectedDestination, (val) {
-                    setState(() {
-                      _selectedDestination = val;
-                      _destinationCityController.text = val!;
-                    });
-                  }),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    hint: 'Tanggal Perjalanan',
-                    icon: Icons.calendar_today_outlined,
-                    controller: _tripDateController,
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        _tripDateController.text = DateFormat('yyyy-MM-dd').format(picked);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  _buildTextField(
-                    hint: 'Tanggal Akhir',
-                    icon: Icons.calendar_today_outlined,
-                    controller: _endDateController,
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        _endDateController.text = DateFormat('yyyy-MM-dd').format(picked);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTextField(hint: 'Jumlah Hari', icon: Icons.calendar_view_day_outlined, controller: _totalDaysController),
-                  const SizedBox(height: 18),
-                  _buildTextField(hint: 'Jumlah Orang', icon: Icons.people_outline, controller: _numberOfPeopleController),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _savePlan,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xffdc2626),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text(
-              'Simpan Rencana',
-              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDropdownField(
     String hint,
     String? selectedValue,
     Function(String?) onChanged,
   ) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -260,6 +232,107 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanCard(Map<String, String> plan, int index) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        title: Text(plan['name']!),
+        subtitle: Text('${plan['origin']} → ${plan['destination']} • ${plan['start date']} s/d ${plan['end date']}'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(icon: const Icon(Icons.edit, color: Colors.orange), onPressed: () => _editPlan(index)),
+            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deletePlan(index)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Perencanaan Perjalanan"),
+        backgroundColor: const Color(0xffdc2626),
+        foregroundColor: Colors.white,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildTextField(hint: 'Nama Perjalanan', icon: Icons.description_outlined, controller: _tripNameController),
+          _buildDropdownField('Asal Kota', _selectedOrigin, (val) {
+            setState(() {
+              _selectedOrigin = val;
+              _originCityController.text = val!;
+            });
+          }),
+          _buildDropdownField('Kota Tujuan', _selectedDestination, (val) {
+            setState(() {
+              _selectedDestination = val;
+              _destinationCityController.text = val!;
+            });
+          }),
+          _buildTextField(
+            hint: 'Tanggal Perjalanan',
+            icon: Icons.calendar_today_outlined,
+            controller: _tripDateController,
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) {
+                _tripDateController.text = DateFormat('yyyy-MM-dd').format(picked);
+              }
+            },
+          ),
+          _buildTextField(
+            hint: 'Tanggal Akhir',
+            icon: Icons.calendar_today_outlined,
+            controller: _endDateController,
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) {
+                _endDateController.text = DateFormat('yyyy-MM-dd').format(picked);
+              }
+            },
+          ),
+          _buildTextField(hint: 'Jumlah Hari', icon: Icons.calendar_view_day_outlined, controller: _totalDaysController),
+          _buildTextField(hint: 'Jumlah Orang', icon: Icons.people_outline, controller: _numberOfPeopleController),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: _savePlan,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xffdc2626),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              _editingIndex == null ? 'Simpan Rencana' : 'Update Rencana',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text('Daftar Rencana:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Column(
+            children: _plans.asMap().entries.map((e) => _buildPlanCard(e.value, e.key)).toList(),
+          ),
+          
         ],
       ),
     );

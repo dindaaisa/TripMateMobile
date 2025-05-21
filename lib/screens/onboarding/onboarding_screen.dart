@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'dart:typed_data';
+import 'package:tripmate_mobile/models/landing_page_model.dart';
 
 class OnBoardingScreen extends StatefulWidget {
   const OnBoardingScreen({super.key});
@@ -11,13 +14,50 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  void _nextPage() {
-    final int totalPages = 3;
-    final int currentPage = _pageController.page?.round() ?? _currentPage;
+  List<ImageProvider> images = [
+    const AssetImage('assets/pics/onboarding1.jpg'),
+    const AssetImage('assets/pics/onboarding2.jpg'),
+  ];
 
-    if (currentPage < totalPages - 1) {
+  List<String> titles = [
+    'Siap jalan-jalan dan ciptakan pengalaman seru?',
+    'Rencanain trip tanpa ribet bareng TripMate!',
+  ];
+
+  List<String> subtitles = [
+    'Dengan TripMate, atur perjalananmu jadi lebih gampang dan menyenangkan.',
+    'Cukup beberapa langkah, dan liburan impianmu siap dijalankan.',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    loadCustomContent();
+    Future.delayed(const Duration(seconds: 2), _nextPage);
+  }
+
+  void loadCustomContent() {
+    final box = Hive.box<LandingPageModel>('landingPageBox');
+
+    setState(() {
+      for (int i = 0; i < 2; i++) {
+        final page = box.get(i);
+        if (page != null) {
+          titles[i] = page.title;
+          subtitles[i] = page.description;
+
+          if (page.imageBytes != null) {
+            images[i] = MemoryImage(page.imageBytes!);
+          }
+        }
+      }
+    });
+  }
+
+  void _nextPage() {
+    if (_currentPage < 2) {
       _pageController.animateToPage(
-        currentPage + 1,
+        _currentPage + 1,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -39,30 +79,30 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
         },
         children: [
           OnBoardingLogo(onNext: _nextPage),
-          OnBoardingLanjut(onNext: _nextPage),
-          OnBoardingMulai(onNext: _nextPage),
+          OnBoardingPage(
+            image: images[0],
+            title: titles[0],
+            subtitle: subtitles[0],
+            onNext: _nextPage,
+            indicatorIndex: 0,
+          ),
+          OnBoardingPage(
+            image: images[1],
+            title: titles[1],
+            subtitle: subtitles[1],
+            onNext: _nextPage,
+            indicatorIndex: 1,
+          ),
         ],
       ),
     );
   }
 }
 
-// Halaman Logo Splash - Otomatis lanjut setelah 2 detik
-class OnBoardingLogo extends StatefulWidget {
+class OnBoardingLogo extends StatelessWidget {
   final VoidCallback onNext;
 
   const OnBoardingLogo({super.key, required this.onNext});
-
-  @override
-  State<OnBoardingLogo> createState() => _OnBoardingLogoState();
-}
-
-class _OnBoardingLogoState extends State<OnBoardingLogo> {
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(seconds: 2), widget.onNext); // Auto splash
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,11 +122,21 @@ class _OnBoardingLogoState extends State<OnBoardingLogo> {
   }
 }
 
-// Halaman 1 - Lanjut
-class OnBoardingLanjut extends StatelessWidget {
+class OnBoardingPage extends StatelessWidget {
+  final ImageProvider image;
+  final String title;
+  final String subtitle;
   final VoidCallback onNext;
+  final int indicatorIndex;
 
-  const OnBoardingLanjut({super.key, required this.onNext});
+  const OnBoardingPage({
+    super.key,
+    required this.image,
+    required this.title,
+    required this.subtitle,
+    required this.onNext,
+    required this.indicatorIndex,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,9 +146,9 @@ class OnBoardingLanjut extends StatelessWidget {
         children: [
           Positioned(
             top: 0,
-            child: Image.asset(
-              "assets/pics/onboarding1.jpg",
-              width: 411,
+            child: Image(
+              image: image,
+              width: MediaQuery.of(context).size.width,
               height: 569,
               fit: BoxFit.cover,
             ),
@@ -109,108 +159,34 @@ class OnBoardingLanjut extends StatelessWidget {
             right: 16,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                SizedBox(height: 16),
+              children: [
+                const SizedBox(height: 16),
                 Row(
-                  children: [
-                    _PageIndicator(isActive: true),
-                    SizedBox(width: 8),
-                    _PageIndicator(isActive: false),
-                  ],
+                  children: List.generate(2, (index) {
+                    return Row(
+                      children: [
+                        _PageIndicator(isActive: index == indicatorIndex),
+                        if (index < 1) const SizedBox(width: 8),
+                      ],
+                    );
+                  }),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
-                  'Siap jalan-jalan dan ciptakan pengalaman seru?',
-                  style: TextStyle(
+                  title,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
-                  'Dengan TripMate, atur perjalananmu jadi lebih gampang dan menyenangkan.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF71727A)),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 40,
-            left: 15,
-            right: 15,
-            child: GestureDetector(
-              onTap: onNext,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8F98A8),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Center(
-                  child: Text(
-                    'Lanjut',
-                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF71727A),
                   ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Halaman 2 - Mulai
-class OnBoardingMulai extends StatelessWidget {
-  final VoidCallback onNext;
-
-  const OnBoardingMulai({super.key, required this.onNext});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            child: Image.asset(
-              "assets/pics/onboarding2.jpg",
-              width: 411,
-              height: 569,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned(
-            top: 569,
-            left: 16,
-            right: 16,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                SizedBox(height: 16),
-                Row(
-                  children: [
-                    _PageIndicator(isActive: false),
-                    SizedBox(width: 8),
-                    _PageIndicator(isActive: true),
-                  ],
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Rencanain trip tanpa ribet bareng TripMate!',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Cukup beberapa langkah, dan liburan impianmu siap dijalankan.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF71727A)),
                 ),
               ],
             ),
@@ -229,7 +205,7 @@ class OnBoardingMulai extends StatelessWidget {
                 ),
                 child: const Center(
                   child: Text(
-                    'Mulai',
+                    'Lanjut',
                     style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                 ),
@@ -242,7 +218,6 @@ class OnBoardingMulai extends StatelessWidget {
   }
 }
 
-// Indikator halaman (lingkaran kecil)
 class _PageIndicator extends StatelessWidget {
   final bool isActive;
 
