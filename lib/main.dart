@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 // Models
 import 'models/user_model.dart';
 import 'models/landing_page_model.dart';
+import 'models/rencana_model.dart';
 
 // Screens umum
 import 'package:tripmate_mobile/screens/onboarding/onboarding_screen.dart';
@@ -63,6 +64,9 @@ void main() async {
     });
     print("✅ Konten default landing page ditambahkan");
   }
+
+  Hive.registerAdapter(RencanaModelAdapter());
+  await Hive.openBox<RencanaModel>('rencanaBox');
 
   runApp(const TripMateApp());
 }

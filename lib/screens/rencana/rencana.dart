@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tripmate_mobile/widgets/custom_header.dart';
-import 'new_planning.dart'; // Pastikan file ini punya class NewPlanningPageBody dengan parameter onSave
+import 'new_planning.dart';
 
 class RencanaScreen extends StatelessWidget {
   const RencanaScreen({super.key});
@@ -78,12 +78,7 @@ class TambahRencana extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => NewPlanningPageBody(
-                      onSave: (Map<String, String> data, int? id) {
-                        // Gantilah bagian ini sesuai logika penyimpanan datamu
-                        print('Data disimpan: $data, ID: $id');
-                      },
-                    ),
+                    builder: (context) => const NewPlanningPageBody(),
                   ),
                 );
               },

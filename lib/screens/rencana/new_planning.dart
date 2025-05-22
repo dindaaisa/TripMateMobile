@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:hive/hive.dart';
+import 'package:tripmate_mobile/models/rencana_model.dart';
 
 class NewPlanningPageBody extends StatefulWidget {
+  const NewPlanningPageBody({super.key});
 
-  final Function(Map<String, String> plan, int? editingIndex) onSave;
-
-  const NewPlanningPageBody({super.key, required this.onSave});
   @override
   State<NewPlanningPageBody> createState() => _NewPlanningPageBodyState();
 }
@@ -24,7 +24,18 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
   String? _selectedDestination;
 
   int? _editingIndex;
-  List<Map<String, String>> _plans = [];
+  Box<RencanaModel>? _rencanaBox;
+
+  @override
+  void initState() {
+    super.initState();
+    _openBox();
+  }
+
+  Future<void> _openBox() async {
+    _rencanaBox = await Hive.openBox<RencanaModel>('rencana');
+    setState(() {});
+  }
 
   @override
   void dispose() {
@@ -50,9 +61,8 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     if (_numberOfPeopleController.text.isEmpty) errors.add("Jumlah Orang");
 
     if (errors.isNotEmpty) {
-      final message = "Harap isi: ${errors.join(', ')}";
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(message),
+        content: Text("Harap isi: ${errors.join(', ')}"),
         backgroundColor: Colors.red,
       ));
       return false;
@@ -79,10 +89,10 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xffdc2626),
+              backgroundColor: const Color(0xffdc2626),
               foregroundColor: Colors.white,
             ),
-            child: const Text('Ya, Simpan', ),
+            child: const Text('Ya, Simpan'),
           ),
         ],
       ),
@@ -90,25 +100,29 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
 
     if (confirmed != true) return;
 
-    final plan = {
-      'name': _tripNameController.text,
-      'origin': _originCityController.text,
-      'destination': _destinationCityController.text,
-      'start date': _tripDateController.text,
-      'end date': _endDateController.text,
-      'sum date': _totalDaysController.text,
-      'people': _numberOfPeopleController.text,
-    };
+    final plan = RencanaModel(
+      userId: 'default_user',
+      name: _tripNameController.text,
+      origin: _originCityController.text,
+      destination: _destinationCityController.text,
+      startDate: _tripDateController.text,
+      endDate: _endDateController.text,
+      sumDate: _totalDaysController.text,
+      people: _numberOfPeopleController.text,
+    );
 
-    setState(() {
-      if (_editingIndex == null) {
-        _plans.add(plan);
-      } else {
-        _plans[_editingIndex!] = plan;
-        _editingIndex = null;
+    if (_editingIndex == null) {
+      await _rencanaBox?.add(plan);
+    } else {
+      final key = _rencanaBox?.keyAt(_editingIndex!);
+      if (key != null) {
+        await _rencanaBox?.put(key, plan);
       }
-      _clearForm();
-    });
+      _editingIndex = null;
+    }
+
+    _clearForm();
+    setState(() {});
   }
 
   void _clearForm() {
@@ -124,18 +138,20 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
   }
 
   void _editPlan(int index) {
-    final plan = _plans[index];
+    final plan = _rencanaBox?.getAt(index);
+    if (plan == null) return;
+
     setState(() {
       _editingIndex = index;
-      _tripNameController.text = plan['name']!;
-      _originCityController.text = plan['origin']!;
-      _destinationCityController.text = plan['destination']!;
-      _tripDateController.text = plan['start date']!;
-      _endDateController.text = plan['end date']!;
-      _totalDaysController.text = plan['sum date']!;
-      _numberOfPeopleController.text = plan['people']!;
-      _selectedOrigin = plan['origin'];
-      _selectedDestination = plan['destination'];
+      _tripNameController.text = plan.name;
+      _originCityController.text = plan.origin;
+      _destinationCityController.text = plan.destination;
+      _tripDateController.text = plan.startDate;
+      _endDateController.text = plan.endDate;
+      _totalDaysController.text = plan.sumDate;
+      _numberOfPeopleController.text = plan.people;
+      _selectedOrigin = plan.origin;
+      _selectedDestination = plan.destination;
     });
   }
 
@@ -146,22 +162,24 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
         title: const Text('Hapus Rencana'),
         content: const Text('Yakin ingin menghapus rencana ini?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xffdc2626)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xffdc2626)),
             child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-          )
+          ),
         ],
       ),
     );
 
     if (confirmed == true) {
-      setState(() {
-        _plans.removeAt(index);
-        _editingIndex = null;
-        _clearForm();
-      });
+      await _rencanaBox?.deleteAt(index);
+      _editingIndex = null;
+      _clearForm();
+      setState(() {});
     }
   }
 
@@ -237,13 +255,13 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     );
   }
 
-  Widget _buildPlanCard(Map<String, String> plan, int index) {
+  Widget _buildPlanCard(RencanaModel plan, int index) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        title: Text(plan['name']!),
-        subtitle: Text('${plan['origin']} → ${plan['destination']} • ${plan['start date']} s/d ${plan['end date']}'),
+        title: Text(plan.name),
+        subtitle: Text('${plan.origin} → ${plan.destination} • ${plan.startDate} s/d ${plan.endDate}'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -257,6 +275,8 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
 
   @override
   Widget build(BuildContext context) {
+    final plans = _rencanaBox?.values.toList() ?? [];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Perencanaan Perjalanan"),
@@ -308,10 +328,27 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
               );
               if (picked != null) {
                 _endDateController.text = DateFormat('yyyy-MM-dd').format(picked);
+
+                // Hitung jumlah hari jika tanggal awal sudah diisi
+                if (_tripDateController.text.isNotEmpty) {
+                  final startDate = DateTime.tryParse(_tripDateController.text);
+                  final endDate = picked;
+
+                  if (startDate != null) {
+                    final difference = endDate.difference(startDate).inDays + 1;
+                    _totalDaysController.text = difference.toString();
+                  }
+                }
               }
             },
           ),
-          _buildTextField(hint: 'Jumlah Hari', icon: Icons.calendar_view_day_outlined, controller: _totalDaysController),
+
+          _buildTextField(
+            hint: 'Jumlah Hari',
+            icon: Icons.calendar_view_day_outlined,
+            controller: _totalDaysController,
+            onTap: () {}, // Kosongkan agar tidak bisa dipilih
+          ),
           _buildTextField(hint: 'Jumlah Orang', icon: Icons.people_outline, controller: _numberOfPeopleController),
           const SizedBox(height: 10),
           ElevatedButton(
@@ -330,9 +367,8 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
           const Text('Daftar Rencana:', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Column(
-            children: _plans.asMap().entries.map((e) => _buildPlanCard(e.value, e.key)).toList(),
+            children: List.generate(plans.length, (i) => _buildPlanCard(plans[i], i)),
           ),
-          
         ],
       ),
     );
