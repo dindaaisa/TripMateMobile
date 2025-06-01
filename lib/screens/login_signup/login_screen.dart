@@ -1,7 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tripmate_mobile/models/user_model.dart'; // Sesuaikan path
+import 'package:tripmate_mobile/models/user_model.dart';
+import 'package:another_flushbar/flushbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,55 +15,86 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+
+  void _showTopNotification(String message) {
+  Flushbar(
+    message: message,
+    backgroundColor: Colors.red,
+    duration: const Duration(seconds: 2),
+    margin: const EdgeInsets.all(8),
+    borderRadius: BorderRadius.circular(8),
+    flushbarPosition: FlushbarPosition.TOP, // ⬅️ Tambahkan ini agar muncul di atas
+    animationDuration: const Duration(milliseconds: 500),
+  ).show(context);
+}
 
   void _login() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+  final email = _emailController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email dan kata sandi wajib diisi')),
-      );
+  if (email.isEmpty || password.isEmpty) {
+    _showTopNotification('Email dan kata sandi wajib diisi');
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    final box = Hive.box<UserModel>('users');
+
+    // 🛑 Cek apakah box kosong
+    if (box.isEmpty) {
+      _showTopNotification('Tidak ada data pengguna. Silakan tambah akun terlebih dahulu.');
+      setState(() {
+        _isLoading = false;
+      });
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    final users = box.values.toList();
 
-    try {
-      final box = Hive.box<UserModel>('users');
-      final users = box.values.toList();
-
-      final matchedUser = users.firstWhere(
-        (user) => user.email == email && user.password == password,
-        orElse: () => UserModel(name: '', email: '', password: '', role: ''),
-      );
-
-      if (matchedUser.email.isNotEmpty) {
-        // Sukses login, arahkan berdasarkan role
-        print('Login berhasil: ${matchedUser.email}, role: ${matchedUser.role}');
-        if (matchedUser.role == 'admin') {
-          Navigator.pushReplacementNamed(context, '/adminHome');
-        } else {
-          Navigator.pushReplacementNamed(context, '/home');
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email atau kata sandi salah')),
-        );
-      }
-    } catch (e) {
-      print('Login error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan saat login')),
-      );
+    print("🔍 Jumlah user di Hive: ${users.length}");
+    for (var user in users) {
+      print("👤 ${user.email} | ${user.password} | ${user.role}");
     }
 
-    setState(() {
-      _isLoading = false;
-    });
+    final matchedUser = users.firstWhere(
+      (user) => user.email == email && user.password == password,
+      orElse: () => UserModel(name: '', email: '', password: '', role: ''),
+    );
+
+    if (matchedUser.email.isNotEmpty) {
+      // Simpan user login ke Hive
+      final currentBox = Hive.box<UserModel>('activeUserBox');
+      await currentBox.clear();
+      await currentBox.add(UserModel(
+        name: matchedUser.name,
+        email: matchedUser.email,
+        password: matchedUser.password,
+        role: matchedUser.role,
+      ));
+      
+      if (matchedUser.role == 'admin') {
+        Navigator.pushReplacementNamed(context, '/adminHome');
+      } else {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } else {
+      _showTopNotification('Email atau kata sandi salah');
+    }
+  } catch (e) {
+    _showTopNotification('Terjadi kesalahan saat login');
+    print("⚠️ Error saat login: $e");
   }
+
+  setState(() {
+    _isLoading = false;
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -120,21 +152,31 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 12),
                         TextField(
                           controller: _passwordController,
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             hintText: 'Kata sandi',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                            suffixIcon: const Icon(Icons.lock_outline, color: Color(0xFF8F9098)),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
                         const Align(
                           alignment: Alignment.centerRight,
                           child: Text(
-                            'Lupakan kata sandi?',
+                            'Lupa kata sandi?',
                             style: TextStyle(
                               color: Color(0xFFDC2626),
                               fontSize: 12,

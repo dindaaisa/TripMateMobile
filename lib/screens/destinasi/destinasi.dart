@@ -5,9 +5,12 @@ import 'aktivitas.dart';
 import 'kuliner.dart';
 import 'paket.dart';
 import 'package:tripmate_mobile/widgets/custom_header.dart';
+import 'package:tripmate_mobile/models/user_model.dart'; 
 
 class DestinasiScreen extends StatefulWidget {
-  const DestinasiScreen({super.key});
+  final UserModel currentUser;
+
+  const DestinasiScreen({super.key, required this.currentUser});
 
   @override
   State<DestinasiScreen> createState() => _DestinasiScreenState();
@@ -27,15 +30,15 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
   Widget _getSelectedWidget() {
     switch (selectedCategory) {
       case 'Akomodasi':
-        return const AkomodasiWidget();
+        return AkomodasiWidget(currentUser: widget.currentUser);
       case 'Transportasi':
-        return const TransportasiWidget();
+        return TransportasiWidget(currentUser: widget.currentUser);
       case 'Aktivitas Seru':
-        return const AktivitasSeruWidget();
+        return AktivitasSeruWidget(currentUser: widget.currentUser);
       case 'Kuliner':
-        return const KulinerWidget();
+        return KulinerWidget(currentUser: widget.currentUser);
       case 'Paket':
-        return const PaketWidget();
+        return PaketWidget(currentUser: widget.currentUser);
       default:
         return const SizedBox.shrink();
     }
@@ -47,10 +50,7 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ✅ Custom header (dengan tinggi 140)
             const CustomHeader(location: "Denpasar, Bali"),
-
-            // ✅ Gambar dan overlay
             Stack(
               children: [
                 Image.asset(
@@ -85,8 +85,6 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                 ),
               ],
             ),
-
-            // ✅ Menu kategori horizontal
             Container(
               margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
               height: 40,
@@ -135,8 +133,6 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                 }).toList(),
               ),
             ),
-
-            // ✅ Konten berdasarkan kategori, isi penuh sisa layar
             Expanded(
               child: _getSelectedWidget(),
             ),

@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:tripmate_mobile/widgets/custom_header.dart';
 import 'new_planning.dart';
+import 'package:tripmate_mobile/models/user_model.dart'; 
 
 class RencanaScreen extends StatelessWidget {
-  const RencanaScreen({super.key});
+  final UserModel currentUser;
+
+  const RencanaScreen({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
-          children: const [
-            CustomHeader(location: "Denpasar, Bali"),
+          children: [
+            const CustomHeader(location: "Denpasar, Bali"),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: TambahRencana(),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              child: TambahRencana(currentUser: currentUser),
             ),
           ],
         ),
@@ -23,8 +26,11 @@ class RencanaScreen extends StatelessWidget {
   }
 }
 
+
 class TambahRencana extends StatelessWidget {
-  const TambahRencana({super.key});
+  final UserModel currentUser;
+
+  const TambahRencana({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +84,7 @@ class TambahRencana extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const NewPlanningPageBody(),
+                    builder: (context) => NewPlanningPageBody(currentUser: currentUser),
                   ),
                 );
               },

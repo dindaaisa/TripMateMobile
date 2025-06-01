@@ -58,7 +58,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
     if (_currentPage < 2) {
       _pageController.animateToPage(
         _currentPage + 1,
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
     } else {
@@ -69,31 +69,29 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
+      body: PageView.builder(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
+        itemCount: 3,
         onPageChanged: (index) {
           setState(() {
             _currentPage = index;
           });
         },
-        children: [
-          OnBoardingLogo(onNext: _nextPage),
-          OnBoardingPage(
-            image: images[0],
-            title: titles[0],
-            subtitle: subtitles[0],
-            onNext: _nextPage,
-            indicatorIndex: 0,
-          ),
-          OnBoardingPage(
-            image: images[1],
-            title: titles[1],
-            subtitle: subtitles[1],
-            onNext: _nextPage,
-            indicatorIndex: 1,
-          ),
-        ],
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return OnBoardingLogo(onNext: _nextPage);
+          } else {
+            return OnBoardingPage(
+              image: images[index - 1],
+              title: titles[index - 1],
+              subtitle: subtitles[index - 1],
+              onNext: _nextPage,
+              indicatorIndex: index - 1,
+              isVisible: _currentPage == index,
+            );
+          }
+        },
       ),
     );
   }
@@ -128,6 +126,7 @@ class OnBoardingPage extends StatelessWidget {
   final String subtitle;
   final VoidCallback onNext;
   final int indicatorIndex;
+  final bool isVisible;
 
   const OnBoardingPage({
     super.key,
@@ -136,6 +135,7 @@ class OnBoardingPage extends StatelessWidget {
     required this.subtitle,
     required this.onNext,
     required this.indicatorIndex,
+    required this.isVisible,
   });
 
   @override
@@ -157,56 +157,64 @@ class OnBoardingPage extends StatelessWidget {
             top: 569,
             left: 16,
             right: 16,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                Row(
-                  children: List.generate(2, (index) {
-                    return Row(
-                      children: [
-                        _PageIndicator(isActive: index == indicatorIndex),
-                        if (index < 1) const SizedBox(width: 8),
-                      ],
-                    );
-                  }),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+            child: AnimatedOpacity(
+              opacity: isVisible ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 500),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  Row(
+                    children: List.generate(2, (index) {
+                      return Row(
+                        children: [
+                          _PageIndicator(isActive: index == indicatorIndex),
+                          if (index < 1) const SizedBox(width: 8),
+                        ],
+                      );
+                    }),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF71727A),
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF71727A),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
             bottom: 40,
             left: 15,
             right: 15,
-            child: GestureDetector(
-              onTap: onNext,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDC2626),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Center(
-                  child: Text(
-                    'Lanjut',
-                    style: TextStyle(color: Colors.white, fontSize: 14),
+            child: AnimatedOpacity(
+              opacity: isVisible ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 500),
+              child: GestureDetector(
+                onTap: onNext,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDC2626),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Lanjut',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                   ),
                 ),
               ),

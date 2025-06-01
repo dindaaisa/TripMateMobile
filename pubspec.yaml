@@ -36,8 +36,13 @@ dependencies:
   flutter_svg: ^1.0.0
   cupertino_icons: ^1.0.8
   intl: ^0.18.1
-  file_picker: ^6.1.1
+  file_picker:
+    git:
+      url: https://github.com/miguelpruivo/flutter_file_picker.git
+      ref: master
   image_picker: ^1.0.4
+  another_flushbar: ^1.10.28
+
 
 dev_dependencies:
   flutter_test:

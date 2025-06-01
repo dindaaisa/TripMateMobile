@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:tripmate_mobile/models/user_model.dart';
+import 'package:another_flushbar/flushbar.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -20,7 +21,16 @@ class _SignupScreenState extends State<SignupScreen> {
   bool hidePassword = true;
   bool hideConfirmPassword = true;
 
-  String selectedRole = 'user'; // Default role
+  void _showTopNotification(String message, {Color color = Colors.redAccent}) {
+    Flushbar(
+      message: message,
+      duration: const Duration(seconds: 3),
+      backgroundColor: color,
+      margin: const EdgeInsets.all(16),
+      borderRadius: BorderRadius.circular(12),
+      flushbarPosition: FlushbarPosition.TOP,
+    ).show(context);
+  }
 
   void _submitForm() async {
     if (_formKey.currentState!.validate() && agreeToPolicy) {
@@ -33,9 +43,7 @@ class _SignupScreenState extends State<SignupScreen> {
       // Cek duplikat email
       final isDuplicate = box.values.any((user) => user.email == email);
       if (isDuplicate) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email sudah digunakan')),
-        );
+        _showTopNotification('Email sudah digunakan');
         return;
       }
 
@@ -43,15 +51,15 @@ class _SignupScreenState extends State<SignupScreen> {
         name: name,
         email: email,
         password: password,
-        role: selectedRole,
+        role: 'user', // default role
       );
       await box.add(newUser);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pendaftaran berhasil! Silakan login.')),
-      );
+      _showTopNotification('Pendaftaran berhasil! Silakan login.', color: Colors.green);
 
       Navigator.pushReplacementNamed(context, '/login');
+    } else if (!agreeToPolicy) {
+      _showTopNotification('Anda harus menyetujui kebijakan dan syarat terlebih dahulu.');
     }
   }
 
@@ -131,23 +139,6 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                         validator: (value) => value != passwordController.text ? 'Password tidak cocok' : null,
-                      ),
-                      const SizedBox(height: 16),
-
-                      const Text('Daftar Sebagai', style: TextStyle(fontWeight: FontWeight.w900)),
-                      const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
-                        value: selectedRole,
-                        items: const [
-                          DropdownMenuItem(value: 'user', child: Text('User')),
-                          DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            selectedRole = value!;
-                          });
-                        },
-                        decoration: _inputDecoration('Pilih role'),
                       ),
                       const SizedBox(height: 16),
 

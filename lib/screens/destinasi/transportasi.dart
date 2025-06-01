@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:tripmate_mobile/models/user_model.dart';
 
 class TransportasiWidget extends StatelessWidget {
-  const TransportasiWidget({super.key});
+  final UserModel currentUser;
+
+  const TransportasiWidget({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Konten Transportasi',
-        style: TextStyle(fontSize: 16),
+        'Transportasi untuk ${currentUser.name}',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }

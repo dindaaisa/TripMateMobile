@@ -2,31 +2,31 @@ import 'package:hive/hive.dart';
 
 part 'rencana_model.g.dart';
 
-@HiveType(typeId: 2) // Ganti typeId sesuai kebutuhan, asal tidak bentrok
+@HiveType(typeId: 2) // Pastikan typeId tidak bentrok dengan model Hive lain
 class RencanaModel extends HiveObject {
   @HiveField(0)
-  String userId; // untuk mengaitkan rencana dengan pengguna
+  String userId; // ID pengguna untuk mengaitkan rencana
 
   @HiveField(1)
-  String name;
+  String name; // Nama rencana
 
   @HiveField(2)
-  String origin;
+  String origin; // Titik awal perjalanan
 
   @HiveField(3)
-  String destination;
+  String destination; // Tujuan perjalanan
 
   @HiveField(4)
-  String startDate;
+  String startDate; // Tanggal mulai
 
   @HiveField(5)
-  String endDate;
+  String endDate; // Tanggal selesai
 
   @HiveField(6)
-  String sumDate;
+  String sumDate; // Total hari perjalanan
 
   @HiveField(7)
-  String people;
+  String people; // Jumlah orang yang ikut
 
   RencanaModel({
     required this.userId,

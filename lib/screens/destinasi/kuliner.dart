@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:tripmate_mobile/models/user_model.dart';
 
 class KulinerWidget extends StatelessWidget {
-  const KulinerWidget({super.key});
+  final UserModel currentUser;
+
+  const KulinerWidget({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Konten Kuliner',
-        style: TextStyle(fontSize: 16),
+        'Kuliner Favorit untuk ${currentUser.name}',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }

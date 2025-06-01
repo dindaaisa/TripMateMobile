@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:tripmate_mobile/models/user_model.dart';
 
 class PaketWidget extends StatelessWidget {
-  const PaketWidget({super.key});
+  final UserModel currentUser;
+
+  const PaketWidget({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Konten Paket',
-        style: TextStyle(fontSize: 16),
+        'Paket Wisata untuk ${currentUser.name}',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }

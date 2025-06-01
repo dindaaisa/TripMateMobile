@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:tripmate_mobile/models/user_model.dart';
 
 class AktivitasSeruWidget extends StatelessWidget {
-  const AktivitasSeruWidget({super.key});
+  final UserModel currentUser;
+
+  const AktivitasSeruWidget({super.key, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'Konten Aktivitas Seru',
-        style: TextStyle(fontSize: 16),
+        'Aktivitas Seru untuk ${currentUser.name}',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }
