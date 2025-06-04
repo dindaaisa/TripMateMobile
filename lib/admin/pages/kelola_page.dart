@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'kelola_pesawat.dart';
+import 'akomodasi/kelola_hotel.dart'; // ✅ Import halaman hotel
 
 class KelolaPage extends StatelessWidget {
   const KelolaPage({Key? key}) : super(key: key);
@@ -44,8 +45,7 @@ class KelolaPage extends StatelessWidget {
                 sectionTitle('Transportasi'),
                 const SizedBox(height: 16),
                 scrollRow([
-                  GridItem(
-                      label: 'Pesawat', svgPath: 'assets/icons/airplane.svg'),
+                  GridItem(label: 'Pesawat', svgPath: 'assets/icons/airplane.svg'),
                   GridItem(label: 'Mobil', svgPath: 'assets/icons/car.svg'),
                   GridItem(label: 'Bus', svgPath: 'assets/icons/bus.svg'),
                   GridItem(label: 'Kereta', svgPath: 'assets/icons/train.svg'),
@@ -56,19 +56,15 @@ class KelolaPage extends StatelessWidget {
                 scrollRow([
                   GridItem(label: 'Hotel', svgPath: 'assets/icons/hotel.svg'),
                   GridItem(label: 'Vila', svgPath: 'assets/icons/vila.svg'),
-                  GridItem(
-                      label: 'Apartemen',
-                      svgPath: 'assets/icons/apartemen.svg'),
+                  GridItem(label: 'Apartemen', svgPath: 'assets/icons/apartemen.svg'),
                 ]),
                 const SizedBox(height: 20),
                 sectionTitle('Tempat'),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    GridItem(
-                        label: 'Makanan', svgPath: 'assets/icons/makanan.svg'),
-                    GridItem(
-                        label: 'Atraksi', svgPath: 'assets/icons/atraksi.svg'),
+                    GridItem(label: 'Makanan', svgPath: 'assets/icons/makanan.svg'),
+                    GridItem(label: 'Atraksi', svgPath: 'assets/icons/atraksi.svg'),
                   ],
                 ),
               ],
@@ -107,8 +103,7 @@ class GridItem extends StatefulWidget {
   final String label;
   final String svgPath;
 
-  const GridItem({Key? key, required this.label, required this.svgPath})
-      : super(key: key);
+  const GridItem({Key? key, required this.label, required this.svgPath}) : super(key: key);
 
   @override
   State<GridItem> createState() => _GridItemState();
@@ -125,21 +120,28 @@ class _GridItemState extends State<GridItem> {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        isSelected ? const Color(0xFFDC2626) : Colors.blueGrey.shade100;
+    final backgroundColor = isSelected ? const Color(0xFFDC2626) : Colors.blueGrey.shade100;
     final iconColor = isSelected ? Colors.white : null;
 
     return GestureDetector(
       onTap: () {
         toggleSelected();
+
+        // ✅ Navigasi berdasarkan label
         if (widget.label == 'Pesawat') {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const KelolaPesawatPage(),
-            ),
+            MaterialPageRoute(builder: (context) => const KelolaPesawatPage()),
           ).then((_) {
-            // Reset warna setelah kembali dari halaman KelolaPesawat
+            setState(() {
+              isSelected = false;
+            });
+          });
+        } else if (widget.label == 'Hotel') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const KelolaHotel()),
+          ).then((_) {
             setState(() {
               isSelected = false;
             });

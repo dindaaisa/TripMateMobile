@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import 'package:tripmate_mobile/widgets/custom_header.dart';
 import 'new_planning.dart';
 import 'package:tripmate_mobile/models/user_model.dart'; 

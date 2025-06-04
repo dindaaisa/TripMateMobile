@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tripmate_mobile/admin/pages/ubah_landing_page.dart';
+import 'package:tripmate_mobile/admin/pages/dashboard/ubah_landing_page.dart';
 
 
 
