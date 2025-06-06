@@ -8,16 +8,27 @@ class RiwayatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Riwayat'),
         backgroundColor: const Color(0xFFDC2626),
         foregroundColor: Colors.white,
+        centerTitle: true,
+        toolbarHeight: screenWidth * 0.14, // responsive height
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
+        ),
       ),
       body: Center(
-        child: Text(
-          'Riwayat milik: ${currentUser.name}',
-          style: const TextStyle(fontSize: 16),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.08),
+          child: Text(
+            'Riwayat milik: ${currentUser.name}',
+            style: TextStyle(fontSize: screenWidth > 375 ? 16 : 15),
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );

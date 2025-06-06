@@ -1,5 +1,3 @@
-// kelola_hotel.dart
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -8,7 +6,8 @@ import 'package:tripmate_mobile/models/hotel_model.dart';
 import 'package:tripmate_mobile/admin/widgets/card_penginapan_baru.dart';
 
 class KelolaHotel extends StatefulWidget {
-  const KelolaHotel({super.key});
+  final VoidCallback? onBack;
+  const KelolaHotel({Key? key, this.onBack}) : super(key: key);
 
   @override
   State<KelolaHotel> createState() => _KelolaHotelState();
@@ -138,15 +137,43 @@ class _KelolaHotelState extends State<KelolaHotel> {
   @override
   Widget build(BuildContext context) {
     final options = optionsBox.get(0);
+    final screenWidth = MediaQuery.of(context).size.width;
 
     if (options == null) {
       return const Center(child: Text('HotelOptionsModel belum tersedia.'));
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Hotel'), backgroundColor: Colors.red),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(90),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFDC2626),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(left: 8, top: screenWidth * 0.08, bottom: 12),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: widget.onBack ?? () => Navigator.pop(context),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Kelola Hotel',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(screenWidth * 0.045),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -169,7 +196,7 @@ class _KelolaHotelState extends State<KelolaHotel> {
                   GestureDetector(
                     onTap: pickImage,
                     child: Container(
-                      height: 120,
+                      height: screenWidth * 0.26 + 40,
                       width: double.infinity,
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),

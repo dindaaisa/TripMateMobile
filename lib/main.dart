@@ -118,7 +118,10 @@ class TripMateApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(),
+      theme: ThemeData(
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        fontFamily: 'Inter',
+      ),
       home: initialScreen,
       routes: {
         '/login': (context) => const LoginScreen(),

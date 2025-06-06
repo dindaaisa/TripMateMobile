@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class KelolaPesawatPage extends StatefulWidget {
-  const KelolaPesawatPage({super.key});
+  final VoidCallback? onBack;
+
+  const KelolaPesawatPage({Key? key, this.onBack}) : super(key: key);
 
   @override
   State<KelolaPesawatPage> createState() => _KelolaPesawatPageState();
@@ -121,6 +123,8 @@ class _KelolaPesawatPageState extends State<KelolaPesawatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
@@ -129,12 +133,12 @@ class _KelolaPesawatPageState extends State<KelolaPesawatPage> {
             color: Color(0xFFDC2626),
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
           ),
-          padding: const EdgeInsets.only(left: 8, top: 32, bottom: 12),
+          padding: EdgeInsets.only(left: 8, top: screenWidth * 0.08, bottom: 12),
           child: Row(
             children: [
               IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
+                onPressed: widget.onBack ?? () => Navigator.pop(context),
               ),
               const SizedBox(width: 8),
               const Text(
@@ -151,7 +155,7 @@ class _KelolaPesawatPageState extends State<KelolaPesawatPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(screenWidth * 0.045),
         child: Column(
           children: [
             // Form
@@ -160,8 +164,7 @@ class _KelolaPesawatPageState extends State<KelolaPesawatPage> {
               child: Column(
                 children: [
                   buildTextField("Maskapai", airlineController),
-                  buildDateTimeField(
-                      "Waktu Keberangkatan", departureController),
+                  buildDateTimeField("Waktu Keberangkatan", departureController),
                   buildDateTimeField("Waktu Kedatangan", arrivalController),
                   buildTextField("Asal", originController),
                   buildTextField("Tujuan", destinationController),

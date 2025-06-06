@@ -21,9 +21,12 @@ class CardPenginapanBaru extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('id');
     final imageBytes = hotel.imageBase64.isNotEmpty ? base64Decode(hotel.imageBase64) : null;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final imageWidth = screenWidth * 0.28 + 38;
+    final imageHeight = screenWidth * 0.34 + 70;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.03, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -47,13 +50,13 @@ class CardPenginapanBaru extends StatelessWidget {
             child: imageBytes != null
                 ? Image.memory(
                     imageBytes,
-                    width: 130,
-                    height: 180,
+                    width: imageWidth,
+                    height: imageHeight,
                     fit: BoxFit.cover,
                   )
                 : Container(
-                    width: 130,
-                    height: 180,
+                    width: imageWidth,
+                    height: imageHeight,
                     color: Colors.grey[300],
                     child: const Icon(Icons.image, size: 40, color: Colors.grey),
                   ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/dashboard/dashboard_page.dart';
-import 'pages/kelola_page.dart';
+import 'pages/kelola/kelola_page.dart';
 import 'pages/akun_page.dart';
 import 'widgets/navbaradmin.dart';
 

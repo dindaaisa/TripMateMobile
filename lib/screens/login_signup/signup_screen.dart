@@ -40,7 +40,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
       final box = Hive.box<UserModel>('users');
 
-      // Cek duplikat email
       final isDuplicate = box.values.any((user) => user.email == email);
       if (isDuplicate) {
         _showTopNotification('Email sudah digunakan');
@@ -51,7 +50,7 @@ class _SignupScreenState extends State<SignupScreen> {
         name: name,
         email: email,
         password: password,
-        role: 'user', // default role
+        role: 'user',
       );
       await box.add(newUser);
 
@@ -65,6 +64,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: const Color(0xFFFFF6F6),
       body: SafeArea(
@@ -79,16 +79,16 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.07, vertical: 16),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Daftar', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+                      const Text('Daftar', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
                       const SizedBox(height: 4),
-                      const Text('Buat akun untuk mulai TripMate!', style: TextStyle(fontSize: 16)),
-                      const SizedBox(height: 24),
+                      const Text('Buat akun untuk mulai TripMate!', style: TextStyle(fontSize: 15)),
+                      const SizedBox(height: 22),
 
                       const Text('Nama', style: TextStyle(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
@@ -191,7 +191,7 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.only(bottom: 20),
               child: Column(
                 children: [
                   GestureDetector(
@@ -208,10 +208,10 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   Container(
                     height: 5,
-                    width: 134,
+                    width: 120,
                     decoration: BoxDecoration(
                       color: Color(0xFF141414),
                       borderRadius: BorderRadius.circular(100),

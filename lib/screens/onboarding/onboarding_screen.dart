@@ -140,6 +140,9 @@ class OnBoardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Container(
       color: Colors.white,
       child: Stack(
@@ -148,57 +151,60 @@ class OnBoardingPage extends StatelessWidget {
             top: 0,
             child: Image(
               image: image,
-              width: MediaQuery.of(context).size.width,
-              height: 569,
+              width: screenWidth,
+              height: screenHeight * 0.52,
               fit: BoxFit.cover,
             ),
           ),
           Positioned(
-            top: 569,
-            left: 16,
-            right: 16,
+            top: screenHeight * 0.52,
+            left: 0,
+            right: 0,
             child: AnimatedOpacity(
               opacity: isVisible ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 500),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  Row(
-                    children: List.generate(2, (index) {
-                      return Row(
-                        children: [
-                          _PageIndicator(isActive: index == indicatorIndex),
-                          if (index < 1) const SizedBox(width: 8),
-                        ],
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    Row(
+                      children: List.generate(2, (index) {
+                        return Row(
+                          children: [
+                            _PageIndicator(isActive: index == indicatorIndex),
+                            if (index < 1) const SizedBox(width: 8),
+                          ],
+                        );
+                      }),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF71727A),
+                    const SizedBox(height: 12),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF71727A),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           Positioned(
-            bottom: 40,
-            left: 15,
-            right: 15,
+            bottom: screenHeight * 0.08,
+            left: 20,
+            right: 20,
             child: AnimatedOpacity(
               opacity: isVisible ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 500),
@@ -213,7 +219,7 @@ class OnBoardingPage extends StatelessWidget {
                   child: const Center(
                     child: Text(
                       'Lanjut',
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+                      style: TextStyle(color: Colors.white, fontSize: 15),
                     ),
                   ),
                 ),

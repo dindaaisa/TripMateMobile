@@ -8,10 +8,12 @@ class TransportasiWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Center(
       child: Text(
         'Transportasi untuk ${currentUser.name}',
-        style: const TextStyle(fontSize: 16),
+        style: TextStyle(fontSize: screenWidth > 375 ? 16 : 15),
       ),
     );
   }

@@ -47,6 +47,8 @@ class _HomeNavigationState extends State<HomeNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     if (_isLoading || _currentUser == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -63,9 +65,13 @@ class _HomeNavigationState extends State<HomeNavigation> {
     return Scaffold(
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.red,
         unselectedItemColor: Colors.grey,
+        selectedFontSize: screenWidth > 375 ? 13 : 11,
+        unselectedFontSize: screenWidth > 375 ? 12 : 10,
+        iconSize: screenWidth > 375 ? 26 : 23,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(

@@ -104,8 +104,9 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     required TextEditingController controller,
     void Function()? onTap,
   }) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: screenWidth * 0.03),
       child: TextField(
         controller: controller,
         readOnly: onTap != null,
@@ -114,20 +115,23 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
           labelText: label,
           prefixIcon: Icon(icon),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: screenWidth * 0.03),
         ),
       ),
     );
   }
 
   Widget _buildDropdownField(String label, String? selectedValue, ValueChanged<String?> onChanged) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: screenWidth * 0.03),
       child: DropdownButtonFormField<String>(
         value: selectedValue,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: const Icon(Icons.location_on_outlined),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: screenWidth * 0.03),
         ),
         items: _cities.map((city) => DropdownMenuItem(
           value: city,
@@ -140,6 +144,8 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     if (_rencanaBox == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -155,10 +161,10 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
         foregroundColor: Colors.white,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(screenWidth * 0.045),
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(screenWidth * 0.045),
             decoration: BoxDecoration(
               color: const Color(0xFFFFF1F1),
               borderRadius: BorderRadius.circular(16),

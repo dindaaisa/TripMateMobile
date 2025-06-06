@@ -34,6 +34,7 @@ class AkunPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -41,7 +42,7 @@ class AkunPage extends StatelessWidget {
             // Header / AppBar custom
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: EdgeInsets.symmetric(vertical: screenWidth * 0.06),
               decoration: const BoxDecoration(
                 color: Color(0xFFDC2626),
                 borderRadius: BorderRadius.vertical(
@@ -65,7 +66,7 @@ class AkunPage extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(screenWidth * 0.07),
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
@@ -93,7 +94,10 @@ class AkunPage extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFDC2626),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                          padding: EdgeInsets.symmetric(
+                            vertical: screenWidth * 0.032,
+                            horizontal: screenWidth * 0.06,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

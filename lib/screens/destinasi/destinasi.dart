@@ -5,7 +5,7 @@ import 'aktivitas.dart';
 import 'kuliner.dart';
 import 'paket.dart';
 import 'package:tripmate_mobile/widgets/custom_header.dart';
-import 'package:tripmate_mobile/models/user_model.dart'; 
+import 'package:tripmate_mobile/models/user_model.dart';
 
 class DestinasiScreen extends StatefulWidget {
   final UserModel currentUser;
@@ -46,6 +46,10 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final headerImgHeight = screenHeight * 0.22; // Sekitar 22% tinggi layar
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -55,27 +59,28 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
               children: [
                 Image.asset(
                   "assets/pics/destination.jpg",
-                  height: 182,
+                  height: headerImgHeight,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
                 Container(
-                  height: 182,
+                  height: headerImgHeight,
+                  width: double.infinity,
                   color: Colors.black.withOpacity(0.15),
                 ),
                 Positioned(
-                  left: 15,
-                  top: 63,
+                  left: 18,
+                  top: headerImgHeight * 0.35,
                   child: Text(
                     'Mau berlibur kemana?',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: screenWidth > 375 ? 24 : 20,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Inter',
                       shadows: [
                         Shadow(
-                          offset: Offset(0, 2),
+                          offset: const Offset(0, 2),
                           blurRadius: 4,
                           color: Colors.black.withOpacity(0.25),
                         ),
@@ -86,11 +91,15 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
               ],
             ),
             Container(
-              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-              height: 40,
-              child: ListView(
+              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+              height: 46,
+              width: double.infinity,
+              child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                children: categories.map((category) {
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+                itemCount: categories.length,
+                itemBuilder: (context, idx) {
+                  final category = categories[idx];
                   final isSelected = selectedCategory == category['name'];
                   return GestureDetector(
                     onTap: () {
@@ -99,9 +108,9 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                       });
                     },
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: isSelected ? const Color(0xFFDC2626) : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
@@ -113,14 +122,14 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                           children: [
                             Icon(
                               category['icon'] as IconData,
-                              size: 16,
+                              size: 17,
                               color: isSelected ? Colors.white : const Color(0xFF8F98A8),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 6),
                             Text(
                               category['name']!,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: isSelected ? Colors.white : const Color(0xFF8F98A8),
                               ),
@@ -130,11 +139,15 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                       ),
                     ),
                   );
-                }).toList(),
+                },
               ),
             ),
             Expanded(
-              child: _getSelectedWidget(),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: 4),
+                child: _getSelectedWidget(),
+              ),
             ),
           ],
         ),

@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:tripmate_mobile/admin/pages/dashboard/ubah_landing_page.dart';
 
-
-
 class DashboardPage extends StatelessWidget {
   final int totalUsers = 1234;
   final int totalItinerary = 567;
 
   const DashboardPage({Key? key}) : super(key: key);
 
-  Widget _buildStatCard(String title, int count) {
+  Widget _buildStatCard(String title, int count, double screenWidth) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(screenWidth * 0.045), // responsive
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(color: Colors.grey.shade200),
@@ -32,7 +30,7 @@ class DashboardPage extends StatelessWidget {
             Text(
               count.toString(),
               style: const TextStyle(
-                fontSize: 36,
+                fontSize: 34,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -41,7 +39,7 @@ class DashboardPage extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: Colors.grey.shade600,
               ),
@@ -52,9 +50,9 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildNavigationCard(BuildContext context) {
+  Widget _buildNavigationCard(BuildContext context, double screenWidth) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045, vertical: 16),
       child: Row(
         children: [
           Expanded(
@@ -90,6 +88,7 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
@@ -99,7 +98,7 @@ class DashboardPage extends StatelessWidget {
             // Header
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24),
+              padding: EdgeInsets.symmetric(vertical: screenWidth * 0.06),
               decoration: const BoxDecoration(
                 color: Color(0xFFDC2626),
                 borderRadius: BorderRadius.vertical(
@@ -119,21 +118,21 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 28),
+            SizedBox(height: screenWidth * 0.07),
 
             // Statistik
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045),
               child: Row(
                 children: [
-                  _buildStatCard('Total Pengguna Aktif', totalUsers),
-                  _buildStatCard('Total Itinerary Dibuat', totalItinerary),
+                  _buildStatCard('Total Pengguna Aktif', totalUsers, screenWidth),
+                  _buildStatCard('Total Itinerary Dibuat', totalItinerary, screenWidth),
                 ],
               ),
             ),
 
             // Tombol navigasi
-            _buildNavigationCard(context),
+            _buildNavigationCard(context, screenWidth),
           ],
         ),
       ),

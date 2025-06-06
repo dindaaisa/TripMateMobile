@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
 import 'package:tripmate_mobile/widgets/custom_header.dart';
 import 'new_planning.dart';
-import 'package:tripmate_mobile/models/user_model.dart'; 
+import 'package:tripmate_mobile/models/user_model.dart';
 
 class RencanaScreen extends StatelessWidget {
   final UserModel currentUser;
@@ -12,14 +11,21 @@ class RencanaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      body: SingleChildScrollView(
+      body: SafeArea(
         child: Column(
           children: [
             const CustomHeader(location: "Denpasar, Bali"),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: TambahRencana(currentUser: currentUser),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.05,
+                  vertical: 18,
+                ),
+                child: TambahRencana(currentUser: currentUser),
+              ),
             ),
           ],
         ),
@@ -28,7 +34,6 @@ class RencanaScreen extends StatelessWidget {
   }
 }
 
-
 class TambahRencana extends StatelessWidget {
   final UserModel currentUser;
 
@@ -36,14 +41,15 @@ class TambahRencana extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.05),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -77,7 +83,7 @@ class TambahRencana extends StatelessWidget {
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -90,11 +96,11 @@ class TambahRencana extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.add, size: 20, color: Colors.white),
+              icon: const Icon(Icons.add, size: 21, color: Colors.white),
               label: const Text(
                 'Tambah Rencana Baru',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
                   color: Colors.white,

@@ -40,6 +40,8 @@ class ProfilScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -47,7 +49,7 @@ class ProfilScreen extends StatelessWidget {
             // Header
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: EdgeInsets.symmetric(vertical: screenWidth * 0.06),
               decoration: const BoxDecoration(
                 color: Color(0xFFDC2626),
                 borderRadius: BorderRadius.vertical(
@@ -70,7 +72,7 @@ class ProfilScreen extends StatelessWidget {
             // Konten Profil
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(screenWidth * 0.07),
                 child: Column(
                   children: [
                     const SizedBox(height: 20),
@@ -99,7 +101,7 @@ class ProfilScreen extends StatelessWidget {
                         backgroundColor: const Color(0xFFDC2626),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 24),
+                            vertical: 13, horizontal: 28),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

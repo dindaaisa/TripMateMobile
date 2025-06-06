@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:hive/hive.dart';
-import 'package:tripmate_mobile/models/landing_page_model.dart'; // Sesuaikan path jika perlu
+import 'package:tripmate_mobile/models/landing_page_model.dart';
 
 class LandingPageItem extends StatefulWidget {
   final int pageIndex;
@@ -23,8 +23,6 @@ class _LandingPageItemState extends State<LandingPageItem> {
   void initState() {
     super.initState();
     final box = Hive.box<LandingPageModel>('landingPageBox');
-
-    // Ambil data dari Hive berdasarkan pageIndex, jika tidak ada gunakan default
     landingData = box.get(widget.pageIndex,
         defaultValue: LandingPageModel(
           title: 'Judul Default ${widget.pageIndex + 1}',
@@ -85,22 +83,26 @@ class _LandingPageItemState extends State<LandingPageItem> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final itemHeight = screenWidth * 0.41;
+    final imageWidth = screenWidth * 0.28;
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        height: 180,
-        padding: const EdgeInsets.all(12),
+        height: itemHeight,
+        padding: EdgeInsets.all(screenWidth * 0.03),
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: landingData.imageBytes != null
-                  ? Image.memory(landingData.imageBytes!, width: 120, height: double.infinity, fit: BoxFit.cover)
+                  ? Image.memory(landingData.imageBytes!, width: imageWidth, height: double.infinity, fit: BoxFit.cover)
                   : Image.asset('assets/pics/onboarding${widget.pageIndex + 1}.jpg',
-                      width: 120, height: double.infinity, fit: BoxFit.cover),
+                      width: imageWidth, height: double.infinity, fit: BoxFit.cover),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: screenWidth * 0.03),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

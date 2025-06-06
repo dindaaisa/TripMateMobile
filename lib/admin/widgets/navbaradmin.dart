@@ -12,7 +12,9 @@ class NavbarAdmin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(
           icon: Icon(Icons.dashboard),
@@ -30,6 +32,9 @@ class NavbarAdmin extends StatelessWidget {
       currentIndex: currentIndex,
       selectedItemColor: Colors.red,
       unselectedItemColor: Colors.grey,
+      selectedFontSize: screenWidth > 375 ? 13 : 11,
+      unselectedFontSize: screenWidth > 375 ? 12 : 10,
+      iconSize: screenWidth > 375 ? 26 : 23,
       onTap: onTap,
     );
   }

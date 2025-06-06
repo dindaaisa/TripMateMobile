@@ -7,8 +7,13 @@ class CustomHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final topBarHeight = screenWidth * 0.13; // ~42px on 320, ~56px on 430
+    final barHeight = screenWidth * 0.12; // ~40-52px
+    final searchBoxHeight = screenWidth * 0.08 + 14; // ~26-48px
+
     return SizedBox(
-      height: 140, // DIBERI TINGGI agar Stack tahu ukurannya
+      height: topBarHeight + barHeight + searchBoxHeight + 16,
       child: Stack(
         children: [
           // Background putih di atas (untuk status bar)
@@ -16,18 +21,17 @@ class CustomHeader extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            height: 42,
+            height: topBarHeight,
             child: Container(color: Colors.white),
           ),
-
           // Bar lokasi & notifikasi
           Positioned(
-            top: 42,
+            top: topBarHeight,
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              height: 40,
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045),
+              height: barHeight,
               color: Colors.white,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -56,17 +60,16 @@ class CustomHeader extends StatelessWidget {
               ),
             ),
           ),
-
           // Search bar
           Positioned(
-            top: 98,
-            left: 16,
-            right: 16,
+            top: topBarHeight + barHeight + 8,
+            left: screenWidth * 0.045,
+            right: screenWidth * 0.045,
             child: Row(
               children: [
                 Expanded(
                   child: Container(
-                    height: 26,
+                    height: searchBoxHeight,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -81,15 +84,15 @@ class CustomHeader extends StatelessWidget {
                       'Temukan pengalaman liburanmu! Ketik sesuatu...',
                       style: TextStyle(
                         color: Color(0xFF8F98A8),
-                        fontSize: 10,
+                        fontSize: 11,
                         fontFamily: 'Inter',
                       ),
                     ),
                   ),
                 ),
                 Container(
-                  width: 30,
-                  height: 26,
+                  width: searchBoxHeight + 4,
+                  height: searchBoxHeight,
                   decoration: BoxDecoration(
                     color: const Color(0xFFDC2626),
                     borderRadius: const BorderRadius.only(
@@ -97,7 +100,7 @@ class CustomHeader extends StatelessWidget {
                       bottomRight: Radius.circular(6),
                     ),
                   ),
-                  child: const Icon(Icons.search, size: 16, color: Colors.white),
+                  child: const Icon(Icons.search, size: 18, color: Colors.white),
                 ),
               ],
             ),
