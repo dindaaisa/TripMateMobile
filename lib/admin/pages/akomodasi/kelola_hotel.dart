@@ -24,19 +24,13 @@ class _KelolaHotelState extends State<KelolaHotel> {
   final ratingController = TextEditingController();
   final priceController = TextEditingController();
 
-  String? selectedBadge;
+  String? selectedTipe;
   List<String> selectedFacilities = [];
+  List<String> selectedBadges = [];
   String? imageBase64;
   int? editingIndex;
 
-  Map<String, IconData> facilitiesMap = {
-    'Wi-Fi': Icons.wifi,
-    'Breakfast': Icons.free_breakfast,
-    'Kolam Renang': Icons.pool,
-    'Gym': Icons.fitness_center,
-    'Parkir': Icons.local_parking,
-    'AC': Icons.ac_unit,
-  };
+  Map<String, IconData> facilitiesMap = {};
 
   @override
   void initState() {
@@ -77,8 +71,9 @@ class _KelolaHotelState extends State<KelolaHotel> {
     locationController.clear();
     ratingController.clear();
     priceController.clear();
-    selectedBadge = null;
+    selectedTipe = null;
     selectedFacilities.clear();
+    selectedBadges.clear();
     imageBase64 = null;
     editingIndex = null;
     setState(() {});
@@ -102,8 +97,9 @@ class _KelolaHotelState extends State<KelolaHotel> {
         lokasi: locationController.text,
         rating: double.tryParse(ratingController.text) ?? 0.0,
         harga: int.tryParse(priceController.text) ?? 0,
-        badge: selectedBadge ?? '',
+        tipe: selectedTipe ?? '',
         fasilitas: List.from(selectedFacilities),
+        badge: List.from(selectedBadges),
         imageBase64: imageBase64 ?? '',
       );
 
@@ -126,8 +122,9 @@ class _KelolaHotelState extends State<KelolaHotel> {
         locationController.text = hotel.lokasi;
         ratingController.text = hotel.rating.toString();
         priceController.text = hotel.harga.toString();
-        selectedBadge = hotel.badge;
+        selectedTipe = hotel.tipe;
         selectedFacilities = List<String>.from(hotel.fasilitas);
+        selectedBadges = List<String>.from(hotel.badge);
         imageBase64 = hotel.imageBase64;
       });
     }
@@ -151,6 +148,7 @@ class _KelolaHotelState extends State<KelolaHotel> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Masukkan Data Hotel',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -163,9 +161,10 @@ class _KelolaHotelState extends State<KelolaHotel> {
                   buildTextField(locationController, 'Lokasi'),
                   buildTextField(ratingController, 'Rating + Review'),
                   buildTextField(priceController, 'Harga kamar termurah', type: TextInputType.number),
-                  buildDropdownField('Badge', options.badges, selectedBadge,
-                      (value) => setState(() => selectedBadge = value)),
+                  buildDropdownField('Tipe', options.tipe, selectedTipe,
+                      (value) => setState(() => selectedTipe = value)),
                   buildMultiFacilityField(options.facilities),
+                  buildMultiBadgeField(options.badge),
                   const SizedBox(height: 10),
                   GestureDetector(
                     onTap: pickImage,
@@ -210,11 +209,14 @@ class _KelolaHotelState extends State<KelolaHotel> {
                   itemCount: box.length,
                   itemBuilder: (context, index) {
                     final hotel = box.getAt(index)!;
-                    return CardPenginapanBaru(
-                      hotel: hotel,
-                      facilitiesMap: facilitiesMap,
-                      onEdit: () => editHotel(index),
-                      onDelete: () => deleteHotel(index),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: CardPenginapanBaru(
+                        hotel: hotel,
+                        facilitiesMap: facilitiesMap,
+                        onEdit: () => editHotel(index),
+                        onDelete: () => deleteHotel(index),
+                      ),
                     );
                   },
                 );
@@ -302,6 +304,38 @@ class _KelolaHotelState extends State<KelolaHotel> {
               child: Text('Minimal pilih 1 fasilitas.',
                   style: TextStyle(color: Colors.red, fontSize: 12)),
             )
+        ],
+      ),
+    );
+  }
+
+  Widget buildMultiBadgeField(List<String> badges) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Badge Tambahan', style: TextStyle(fontSize: 16)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: badges.map((badge) {
+              final selected = selectedBadges.contains(badge);
+              return FilterChip(
+                label: Text(badge),
+                selected: selected,
+                onSelected: (bool value) {
+                  setState(() {
+                    if (value) {
+                      selectedBadges.add(badge);
+                    } else {
+                      selectedBadges.remove(badge);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
         ],
       ),
     );

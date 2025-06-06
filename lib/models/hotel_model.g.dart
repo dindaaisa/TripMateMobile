@@ -21,16 +21,17 @@ class HotelModelAdapter extends TypeAdapter<HotelModel> {
       lokasi: fields[1] as String,
       rating: fields[2] as double,
       harga: fields[3] as int,
-      badge: fields[4] as String,
+      tipe: fields[4] as String,
       fasilitas: (fields[5] as List).cast<String>(),
       imageBase64: fields[6] as String,
+      badge: (fields[7] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, HotelModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.nama)
       ..writeByte(1)
@@ -40,11 +41,13 @@ class HotelModelAdapter extends TypeAdapter<HotelModel> {
       ..writeByte(3)
       ..write(obj.harga)
       ..writeByte(4)
-      ..write(obj.badge)
+      ..write(obj.tipe)
       ..writeByte(5)
       ..write(obj.fasilitas)
       ..writeByte(6)
-      ..write(obj.imageBase64);
+      ..write(obj.imageBase64)
+      ..writeByte(7)
+      ..write(obj.badge);
   }
 
   @override
@@ -69,19 +72,22 @@ class HotelOptionsModelAdapter extends TypeAdapter<HotelOptionsModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return HotelOptionsModel(
-      badges: (fields[0] as List).cast<String>(),
+      tipe: (fields[0] as List).cast<String>(),
       facilities: (fields[1] as List).cast<String>(),
+      badge: (fields[2] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, HotelOptionsModel obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(3)
       ..writeByte(0)
-      ..write(obj.badges)
+      ..write(obj.tipe)
       ..writeByte(1)
-      ..write(obj.facilities);
+      ..write(obj.facilities)
+      ..writeByte(2)
+      ..write(obj.badge);
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:tripmate_mobile/models/hotel_model.dart';
 
 class CardPenginapanBaru extends StatelessWidget {
@@ -18,13 +19,14 @@ class CardPenginapanBaru extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageBytes = base64Decode(hotel.imageBase64);
+    final formatter = NumberFormat.decimalPattern('id');
+    final imageBytes = hotel.imageBase64.isNotEmpty ? base64Decode(hotel.imageBase64) : null;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      height: 160,
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -32,38 +34,43 @@ class CardPenginapanBaru extends StatelessWidget {
             offset: const Offset(0, 3),
           ),
         ],
-        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gambar hotel dari atas ke bawah
+          // Gambar hotel
           ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(16),
               bottomLeft: Radius.circular(16),
             ),
-            child: Image.memory(
-              imageBytes,
-              width: 120,
-              height: double.infinity,
-              fit: BoxFit.cover,
-            ),
+            child: imageBytes != null
+                ? Image.memory(
+                    imageBytes,
+                    width: 130,
+                    height: 180,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 130,
+                    height: 180,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image, size: 40, color: Colors.grey),
+                  ),
           ),
 
-          // Konten
+          // Konten kanan
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Nama hotel
                   Text(
                     hotel.nama,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
@@ -91,14 +98,18 @@ class CardPenginapanBaru extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
 
-                  // Badge
+                  // Tipe
                   Row(
                     children: [
                       const Icon(Icons.hotel, size: 14, color: Color(0xFFDC2626)),
                       const SizedBox(width: 4),
                       Text(
-                        hotel.badge,
-                        style: const TextStyle(fontSize: 11, color: Color(0xFFDC2626)),
+                        hotel.tipe,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFDC2626),
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ],
                   ),
@@ -118,62 +129,82 @@ class CardPenginapanBaru extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 6),
+
+                  // Badge
+                  if (hotel.badge.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: hotel.badge.map((badge) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: ShapeDecoration(
+                            shape: RoundedRectangleBorder(
+                              side: const BorderSide(width: 0.5, color: Color(0xFFDC2626)),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Text(
+                            badge,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 8,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
+                  const SizedBox(height: 6),
+
+                  // Harga
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Mulai dari ',
+                          style: TextStyle(fontSize: 11, color: Color(0xFFDC2626)),
+                        ),
+                        TextSpan(
+                          text: 'Rp ${formatter.format(hotel.harga)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Color(0xFFDC2626),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Tombol Edit & Hapus
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildActionButton(
+                        icon: Icons.edit,
+                        label: 'Edit',
+                        color: const Color(0xFFF0AA14),
+                        onTap: onEdit,
+                      ),
+                      const SizedBox(width: 6),
+                      _buildActionButton(
+                        icon: Icons.delete,
+                        label: 'Hapus',
+                        color: const Color(0xFFDC2626),
+                        onTap: onDelete,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ),
-
-          // Kolom kanan (harga dan tombol)
-          Padding(
-            padding: const EdgeInsets.only(right: 10, top: 10, bottom: 10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // Harga
-                RichText(
-                  text: TextSpan(
-                    text: 'Mulai dari\n',
-                    style: const TextStyle(
-                      color: Color(0xFFDC2626),
-                      fontSize: 10,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'Rp ${hotel.harga}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: Color(0xFFDC2626),
-                        ),
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.right,
-                ),
-
-                // Tombol edit dan hapus
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildActionButton(
-                      icon: Icons.edit,
-                      label: 'Edit',
-                      color: const Color(0xFFF0AA14),
-                      onTap: onEdit,
-                    ),
-                    const SizedBox(width: 6),
-                    _buildActionButton(
-                      icon: Icons.delete,
-                      label: 'Hapus',
-                      color: const Color(0xFFDC2626),
-                      onTap: onDelete,
-                    ),
-                  ],
-                )
-              ],
-            ),
-          )
         ],
       ),
     );
@@ -192,7 +223,6 @@ class CardPenginapanBaru extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.8), width: 0.5),
         ),
         child: Row(
           children: [

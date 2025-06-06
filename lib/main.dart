@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'models/user_model.dart';
 import 'models/landing_page_model.dart';
 import 'models/rencana_model.dart';
-import 'models/hotel_model.dart'; // Berisi HotelModel & HotelOptionsModel
+import 'models/hotel_model.dart';
 
 // Screens umum
 import 'package:tripmate_mobile/screens/onboarding/onboarding_screen.dart';
@@ -23,7 +23,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
 
-  // Registrasi adapter model jika belum terdaftar
   if (!Hive.isAdapterRegistered(UserModelAdapter().typeId)) {
     Hive.registerAdapter(UserModelAdapter());
   }
@@ -40,7 +39,6 @@ void main() async {
     Hive.registerAdapter(HotelOptionsModelAdapter());
   }
 
-  // Debug: hapus semua box saat pengembangan (opsional)
   if (kDebugMode) {
     await Hive.deleteBoxFromDisk('users');
     await Hive.deleteBoxFromDisk('activeUserBox');
@@ -48,10 +46,8 @@ void main() async {
     await Hive.deleteBoxFromDisk('rencanaBox');
     await Hive.deleteBoxFromDisk('hotelBox');
     await Hive.deleteBoxFromDisk('hotelOptionsBox');
-    print("🧹 Semua box dihapus karena mode debug aktif");
   }
 
-  // Buka semua box Hive
   await Hive.openBox<UserModel>('users');
   await Hive.openBox<UserModel>('activeUserBox');
   await Hive.openBox<LandingPageModel>('landingPageBox');
@@ -59,17 +55,14 @@ void main() async {
   await Hive.openBox<HotelModel>('hotelBox');
   await Hive.openBox<HotelOptionsModel>('hotelOptionsBox');
 
-  // Tambahkan akun default jika belum ada
   final userBox = Hive.box<UserModel>('users');
   if (userBox.isEmpty) {
     await userBox.addAll([
       UserModel(name: 'Admin', email: 'admin@gmail.com', password: 'admin123', role: 'admin'),
       UserModel(name: 'Dinda Aisa', email: 'user@gmail.com', password: '12345678', role: 'user'),
     ]);
-    print("✅ Akun default ditambahkan");
   }
 
-  // Tambahkan konten default landing page
   final landingPageBox = Hive.box<LandingPageModel>('landingPageBox');
   if (landingPageBox.isEmpty) {
     landingPageBox.putAll({
@@ -84,44 +77,24 @@ void main() async {
         imageBytes: null,
       ),
     });
-    print("✅ Konten default landing page ditambahkan");
   }
 
-  // Tambahkan data default badge & fasilitas hotel
   final hotelOptionsBox = Hive.box<HotelOptionsModel>('hotelOptionsBox');
   if (hotelOptionsBox.isEmpty) {
-    final defaultFacilities = [
-      'Wi-Fi',
-      'Breakfast',
-      'Kolam Renang',
-      'Gym',
-      'Parkir',
-      'AC',
-    ];
+    final defaultFacilities = ['Wi-Fi', 'Breakfast', 'Kolam Renang', 'Gym', 'Parkir', 'AC'];
     final defaultBadges = ['Populer', 'Rekomendasi', 'Baru'];
+    final defaultTipe = ['Hotel', 'Villa'];
 
     hotelOptionsBox.put(
       0,
       HotelOptionsModel(
-        badges: defaultBadges,
+        tipe: defaultTipe,
+        badge: defaultBadges,
         facilities: defaultFacilities,
       ),
     );
-    print("✅ Opsi badge & fasilitas default ditambahkan");
   }
 
-  /// Simpan daftar fasilitas beserta ikon (untuk digunakan di dropdown admin)
-  /// Gunakan map ini dalam screen admin saat membuat dropdown:
-  Map<String, IconData> facilitiesMap = {
-    'Wi-Fi': Icons.wifi,
-    'Breakfast': Icons.free_breakfast,
-    'Kolam Renang': Icons.pool,
-    'Gym': Icons.fitness_center,
-    'Parkir': Icons.local_parking,
-    'AC': Icons.ac_unit,
-  };
-
-  // Tentukan screen awal berdasarkan user aktif
   final activeUserBox = Hive.box<UserModel>('activeUserBox');
   Widget initialScreen = const OnBoardingScreen();
 
