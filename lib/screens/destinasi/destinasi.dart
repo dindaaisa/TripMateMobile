@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'akomodasi.dart';
-import 'transportasi.dart';
-import 'aktivitas.dart';
-import 'kuliner.dart';
-import 'paket.dart';
-import 'package:tripmate_mobile/widgets/custom_header.dart';
 import 'package:tripmate_mobile/models/user_model.dart';
+import 'package:tripmate_mobile/widgets/custom_header.dart';
+import 'package:tripmate_mobile/screens/destinasi/akomodasi.dart';
+import 'package:tripmate_mobile/screens/destinasi/transportasi.dart';
+import 'package:tripmate_mobile/screens/destinasi/aktivitas.dart';
+import 'package:tripmate_mobile/screens/destinasi/kuliner.dart';
+import 'package:tripmate_mobile/screens/destinasi/paket.dart';
+import 'package:tripmate_mobile/shared/location_state.dart';
 
 class DestinasiScreen extends StatefulWidget {
   final UserModel currentUser;
-
   const DestinasiScreen({super.key, required this.currentUser});
 
   @override
@@ -27,18 +27,18 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
     {'name': 'Paket', 'icon': Icons.inventory_2},
   ];
 
-  Widget _getSelectedWidget() {
+  Widget _getSelectedWidget(String selectedLocation) {
     switch (selectedCategory) {
       case 'Akomodasi':
-        return AkomodasiWidget(currentUser: widget.currentUser);
+        return AkomodasiWidget(currentUser: widget.currentUser, location: selectedLocation);
       case 'Transportasi':
-        return TransportasiWidget(currentUser: widget.currentUser);
+        return TransportasiWidget(currentUser: widget.currentUser, location: selectedLocation);
       case 'Aktivitas Seru':
-        return AktivitasSeruWidget(currentUser: widget.currentUser);
+        return AktivitasSeruWidget(currentUser: widget.currentUser, location: selectedLocation);
       case 'Kuliner':
-        return KulinerWidget(currentUser: widget.currentUser);
+        return KulinerWidget(currentUser: widget.currentUser, location: selectedLocation);
       case 'Paket':
-        return PaketWidget(currentUser: widget.currentUser);
+        return PaketWidget(currentUser: widget.currentUser, location: selectedLocation);
       default:
         return const SizedBox.shrink();
     }
@@ -48,13 +48,13 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final headerImgHeight = screenHeight * 0.22; // Sekitar 22% tinggi layar
+    final headerImgHeight = screenHeight * 0.22;
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            const CustomHeader(location: "Denpasar, Bali"),
+            const CustomHeader(),
             Stack(
               children: [
                 Image.asset(
@@ -72,7 +72,7 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                   left: 18,
                   top: headerImgHeight * 0.35,
                   child: Text(
-                    'Mau berlibur kemana?',
+                    'Mau berlibur \nkemana?',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: screenWidth > 375 ? 24 : 20,
@@ -142,11 +142,13 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                 },
               ),
             ),
+            // Jangan beri padding horizontal di sini agar banner bisa full
             Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: 4),
-                child: _getSelectedWidget(),
+              child: ValueListenableBuilder<String>(
+                valueListenable: LocationState.selectedLocation,
+                builder: (context, selectedLocation, _) {
+                  return _getSelectedWidget(selectedLocation);
+                },
               ),
             ),
           ],

@@ -241,14 +241,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Container(
-                    height: 5,
-                    width: 120,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF141414),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                  ),
+                  // Container(
+                  //   height: 5,
+                  //   width: 120,
+                  //   decoration: BoxDecoration(
+                  //     color: const Color(0xFF141414),
+                  //     borderRadius: BorderRadius.circular(100),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

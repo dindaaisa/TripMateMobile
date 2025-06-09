@@ -32,15 +32,14 @@ class _KelolaPageState extends State<KelolaPage> {
     return Scaffold(
       body: Column(
         children: [
-          // AppBar custom
+          // Responsive Header mirip AkunPage
           Container(
             width: double.infinity,
-            height: screenWidth * 0.19 + 36, // responsive height
+            padding: EdgeInsets.symmetric(vertical: screenWidth * 0.06),
             decoration: const BoxDecoration(
               color: Color(0xFFDC2626),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(20),
               ),
             ),
             child: const Center(

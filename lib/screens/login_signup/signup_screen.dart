@@ -209,14 +209,14 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Container(
-                    height: 5,
-                    width: 120,
-                    decoration: BoxDecoration(
-                      color: Color(0xFF141414),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                  ),
+                  // Container(
+                  //   height: 5,
+                  //   width: 120,
+                  //   decoration: BoxDecoration(
+                  //     color: Color(0xFF141414),
+                  //     borderRadius: BorderRadius.circular(100),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:tripmate_mobile/widgets/custom_header.dart';
-import 'new_planning.dart';
 import 'package:tripmate_mobile/models/user_model.dart';
+import 'new_planning.dart';
 
 class RencanaScreen extends StatelessWidget {
   final UserModel currentUser;
@@ -13,11 +11,34 @@ class RencanaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
+    // Tidak usah pakai CustomHeader (atau jika ingin, buat CustomHeader tanpa dropdown lokasi)
+    // Atau tampilkan header statis, misal:
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            const CustomHeader(location: "Denpasar, Bali"),
+            // Contoh header statis tanpa dropdown lokasi:
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: screenWidth * 0.06),
+              decoration: const BoxDecoration(
+                color: Color(0xFFDC2626),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+              ),
+              child: const Center(
+                child: Text(
+                  'Rencana',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
             Expanded(
               child: Padding(
                 padding: EdgeInsets.symmetric(

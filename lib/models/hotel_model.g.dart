@@ -25,13 +25,16 @@ class HotelModelAdapter extends TypeAdapter<HotelModel> {
       fasilitas: (fields[5] as List).cast<String>(),
       imageBase64: fields[6] as String,
       badge: (fields[7] as List).cast<String>(),
+      reviewCount: fields[8] as int,
+      lokasiDetail: fields[9] as String,
+      areaAkomodasi: (fields[10] as List).cast<AreaAkomodasiModel>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, HotelModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.nama)
       ..writeByte(1)
@@ -47,7 +50,13 @@ class HotelModelAdapter extends TypeAdapter<HotelModel> {
       ..writeByte(6)
       ..write(obj.imageBase64)
       ..writeByte(7)
-      ..write(obj.badge);
+      ..write(obj.badge)
+      ..writeByte(8)
+      ..write(obj.reviewCount)
+      ..writeByte(9)
+      ..write(obj.lokasiDetail)
+      ..writeByte(10)
+      ..write(obj.areaAkomodasi);
   }
 
   @override
@@ -61,9 +70,49 @@ class HotelModelAdapter extends TypeAdapter<HotelModel> {
           typeId == other.typeId;
 }
 
-class HotelOptionsModelAdapter extends TypeAdapter<HotelOptionsModel> {
+class AreaAkomodasiModelAdapter extends TypeAdapter<AreaAkomodasiModel> {
   @override
   final int typeId = 4;
+
+  @override
+  AreaAkomodasiModel read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return AreaAkomodasiModel(
+      nama: fields[0] as String,
+      jarakKm: fields[1] as double,
+      iconName: fields[2] as String,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, AreaAkomodasiModel obj) {
+    writer
+      ..writeByte(3)
+      ..writeByte(0)
+      ..write(obj.nama)
+      ..writeByte(1)
+      ..write(obj.jarakKm)
+      ..writeByte(2)
+      ..write(obj.iconName);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AreaAkomodasiModelAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class HotelOptionsModelAdapter extends TypeAdapter<HotelOptionsModel> {
+  @override
+  final int typeId = 5;
 
   @override
   HotelOptionsModel read(BinaryReader reader) {

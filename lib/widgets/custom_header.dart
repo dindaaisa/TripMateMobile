@@ -1,112 +1,171 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../shared/location_state.dart';
 
-class CustomHeader extends StatelessWidget {
-  final String location;
+class CustomHeader extends StatefulWidget {
+  final List<String>? lokasiList;
+  const CustomHeader({super.key, this.lokasiList});
 
-  const CustomHeader({super.key, required this.location});
+  @override
+  State<CustomHeader> createState() => _CustomHeaderState();
+}
+
+class _CustomHeaderState extends State<CustomHeader> {
+  late Future<List<String>> _lokasiListFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _lokasiListFuture = _fetchLokasiList();
+  }
+
+  Future<List<String>> _fetchLokasiList() async {
+    if (widget.lokasiList != null) {
+      return widget.lokasiList!;
+    }
+    final box = await Hive.openBox('lokasiBox');
+    return List<String>.from(box.get('list', defaultValue: [
+      "Denpasar, Bali",
+      "Jakarta, DKI Jakarta",
+      "Bandung, Jawa Barat"
+    ]));
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final topBarHeight = screenWidth * 0.13; // ~42px on 320, ~56px on 430
-    final barHeight = screenWidth * 0.12; // ~40-52px
-    final searchBoxHeight = screenWidth * 0.08 + 14; // ~26-48px
+    final topBarHeight = screenWidth * 0.13;
+    final barHeight = screenWidth * 0.12;
+    final searchBoxHeight = screenWidth * 0.08 + 14;
 
-    return SizedBox(
-      height: topBarHeight + barHeight + searchBoxHeight + 16,
-      child: Stack(
-        children: [
-          // Background putih di atas (untuk status bar)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: topBarHeight,
-            child: Container(color: Colors.white),
-          ),
-          // Bar lokasi & notifikasi
-          Positioned(
-            top: topBarHeight,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045),
-              height: barHeight,
-              color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+    return FutureBuilder<List<String>>(
+      future: _lokasiListFuture,
+      builder: (context, snapshot) {
+        final locations = snapshot.data ?? ["Denpasar, Bali"];
+        return SizedBox(
+          height: topBarHeight + barHeight + searchBoxHeight + 16,
+          child: Stack(
+            children: [
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: topBarHeight,
+                child: Container(color: Colors.white),
+              ),
+              // Dropdown lokasi
+              Positioned(
+                top: topBarHeight,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045),
+                  height: barHeight,
+                  color: Colors.white,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(Icons.location_on, size: 18, color: Colors.black),
-                      const SizedBox(width: 4),
-                      Text(
-                        location,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 18, color: Colors.black),
+                          const SizedBox(width: 4),
+                          ValueListenableBuilder<String>(
+                            valueListenable: LocationState.selectedLocation,
+                            builder: (context, selectedLocation, _) {
+                              // Pastikan value di dropdown valid (default ke first jika null)
+                              final validDropdownValue = locations.contains(selectedLocation)
+                                  ? selectedLocation
+                                  : locations.first;
+                              return DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: validDropdownValue,
+                                  icon: const Icon(Icons.arrow_drop_down),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black,
+                                  ),
+                                  items: locations.map((loc) {
+                                    return DropdownMenuItem(
+                                      value: loc,
+                                      child: Text(loc),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) async {
+                                    if (value != null) {
+                                      // Update global location state
+                                      LocationState.selectedLocation.value = value;
+                                      // Simpan ke Hive untuk persist
+                                      final selectedLocationBox = await Hive.openBox('selectedLocationBox');
+                                      selectedLocationBox.put('selected', value);
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          _notificationIcon(),
+                          const SizedBox(width: 8),
+                          _languageIcon(),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Search bar
+              Positioned(
+                top: topBarHeight + barHeight + 8,
+                left: screenWidth * 0.045,
+                right: screenWidth * 0.045,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: searchBoxHeight,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFFD3D5DD),
+                            width: 0.5,
+                          ),
+                        ),
+                        alignment: Alignment.centerLeft,
+                        child: const Text(
+                          'Temukan pengalaman liburanmu! Ketik sesuatu...',
+                          style: TextStyle(
+                            color: Color(0xFF8F98A8),
+                            fontSize: 11,
+                            fontFamily: 'Inter',
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      _notificationIcon(),
-                      const SizedBox(width: 8),
-                      _languageIcon(),
-                    ],
-                  ),
-                ],
+                    ),
+                    Container(
+                      width: searchBoxHeight + 4,
+                      height: searchBoxHeight,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDC2626),
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(6),
+                          bottomRight: Radius.circular(6),
+                        ),
+                      ),
+                      child: const Icon(Icons.search, size: 18, color: Colors.white),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
-          // Search bar
-          Positioned(
-            top: topBarHeight + barHeight + 8,
-            left: screenWidth * 0.045,
-            right: screenWidth * 0.045,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: searchBoxHeight,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: const Color(0xFFD3D5DD),
-                        width: 0.5,
-                      ),
-                    ),
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      'Temukan pengalaman liburanmu! Ketik sesuatu...',
-                      style: TextStyle(
-                        color: Color(0xFF8F98A8),
-                        fontSize: 11,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: searchBoxHeight + 4,
-                  height: searchBoxHeight,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDC2626),
-                    borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(6),
-                      bottomRight: Radius.circular(6),
-                    ),
-                  ),
-                  child: const Icon(Icons.search, size: 18, color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      }
     );
   }
 

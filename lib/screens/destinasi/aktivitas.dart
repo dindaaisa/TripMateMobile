@@ -3,17 +3,17 @@ import 'package:tripmate_mobile/models/user_model.dart';
 
 class AktivitasSeruWidget extends StatelessWidget {
   final UserModel currentUser;
+  final String? location;
 
-  const AktivitasSeruWidget({super.key, required this.currentUser});
+  const AktivitasSeruWidget({super.key, required this.currentUser, this.location});
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
+    // Ganti dengan tampilan aktivitas seru sesuai kebutuhanmu
     return Center(
       child: Text(
-        'Aktivitas Seru untuk ${currentUser.name}',
-        style: TextStyle(fontSize: screenWidth > 375 ? 16 : 15),
+        'Daftar aktivitas seru di $location',
+        style: const TextStyle(fontSize: 16),
       ),
     );
   }
