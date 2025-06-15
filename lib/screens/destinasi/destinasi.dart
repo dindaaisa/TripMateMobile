@@ -10,14 +10,20 @@ import 'package:tripmate_mobile/shared/location_state.dart';
 
 class DestinasiScreen extends StatefulWidget {
   final UserModel currentUser;
-  const DestinasiScreen({super.key, required this.currentUser});
+  final String initialCategory;
+  const DestinasiScreen({
+    Key? key,
+    required this.currentUser,
+    this.initialCategory = 'Akomodasi',
+  }) : super(key: key);
 
   @override
   State<DestinasiScreen> createState() => _DestinasiScreenState();
 }
 
 class _DestinasiScreenState extends State<DestinasiScreen> {
-  String selectedCategory = 'Akomodasi';
+  late String selectedCategory;
+  final ScrollController _scrollController = ScrollController();
 
   final List<Map<String, dynamic>> categories = [
     {'name': 'Akomodasi', 'icon': Icons.hotel},
@@ -26,6 +32,26 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
     {'name': 'Kuliner', 'icon': Icons.restaurant},
     {'name': 'Paket', 'icon': Icons.inventory_2},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedCategory = widget.initialCategory;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoScrollToSelected();
+    });
+  }
+
+  void _autoScrollToSelected() {
+    final idx = categories.indexWhere((cat) => cat['name'] == selectedCategory);
+    if (idx != -1) {
+      _scrollController.animateTo(
+        idx * 130.0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   Widget _getSelectedWidget(String selectedLocation) {
     switch (selectedCategory) {
@@ -92,9 +118,10 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
             ),
             Container(
               margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
-              height: 46,
+              height: 40, // lebih kecil, sesuai gambar
               width: double.infinity,
               child: ListView.builder(
+                controller: _scrollController,
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
                 itemCount: categories.length,
@@ -105,33 +132,44 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                     onTap: () {
                       setState(() {
                         selectedCategory = category['name']!;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _autoScrollToSelected();
+                        });
                       });
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        constraints: const BoxConstraints(
+                          minWidth: 104,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFDC2626) : Colors.transparent,
+                          color: isSelected ? const Color(0xFFDC2626) : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected ? const Color(0xFFDC2626) : const Color(0xFF8F98A8),
+                            width: 1.5,
                           ),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               category['icon'] as IconData,
-                              size: 17,
+                              size: 18,
                               color: isSelected ? Colors.white : const Color(0xFF8F98A8),
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              category['name']!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected ? Colors.white : const Color(0xFF8F98A8),
+                            const SizedBox(width: 7),
+                            Flexible(
+                              child: Text(
+                                category['name']!,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected ? Colors.white : const Color(0xFF8F98A8),
+                                ),
                               ),
                             ),
                           ],
@@ -142,7 +180,6 @@ class _DestinasiScreenState extends State<DestinasiScreen> {
                 },
               ),
             ),
-            // Jangan beri padding horizontal di sini agar banner bisa full
             Expanded(
               child: ValueListenableBuilder<String>(
                 valueListenable: LocationState.selectedLocation,

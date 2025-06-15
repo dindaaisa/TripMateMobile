@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart';
-import 'package:intl/date_symbol_data_local.dart'; // Tambahkan ini
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // Models
 import 'models/user_model.dart';
 import 'models/landing_page_model.dart';
 import 'models/rencana_model.dart';
 import 'models/hotel_model.dart';
-import 'models/kamar_model.dart'; // Tambahkan untuk tipe kamar
+import 'models/kamar_model.dart';
 
 // Screens umum
-import 'package:tripmate_mobile/screens/onboarding/onboarding_screen.dart';
-import 'package:tripmate_mobile/screens/login_signup/login_screen.dart';
-import 'package:tripmate_mobile/screens/login_signup/signup_screen.dart';
-import 'package:tripmate_mobile/widgets/home_navigation.dart';
+import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/login_signup/login_screen.dart';
+import 'screens/login_signup/signup_screen.dart';
+import 'widgets/home_navigation.dart';
 
 // Screens admin
 import 'admin/main_admin_screen.dart';
@@ -125,11 +126,15 @@ void main() async {
   // Inisialisasi lokasi (untuk dropdown lokasi pada header) dengan format "Kota, Provinsi"
   if (lokasiBox.get('list') == null || (lokasiBox.get('list') as List).isEmpty) {
     lokasiBox.put('list', [
-      "Denpasar, Bali",
       "Jakarta, DKI Jakarta",
       "Bandung, Jawa Barat",
+      "Semarang, Jawa Tengah",
       "Surabaya, Jawa Timur",
-      "Medan, Sumatera Utara"
+      "Yogyakarta, DI Yogyakarta",
+      "Serang, Banten",
+      "Denpasar, Bali",
+      "Mataram, Nusa Tenggara Barat",
+      "Kupang, Nusa Tenggara Timur"
     ]);
   }
 
@@ -168,6 +173,15 @@ class TripMateApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'Inter',
       ),
+      supportedLocales: const [
+        Locale('id', 'ID'),
+        Locale('en', 'US'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: initialScreen,
       routes: {
         '/login': (context) => const LoginScreen(),

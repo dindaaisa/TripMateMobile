@@ -6,7 +6,7 @@ import 'package:tripmate_mobile/widgets/card_akomodasi.dart';
 import 'package:tripmate_mobile/widgets/banner_akomodasi.dart';
 import 'package:tripmate_mobile/widgets/card_akomodasi_elegan.dart';
 import 'package:tripmate_mobile/widgets/card_tipe_akomodasi.dart';
-import 'package:tripmate_mobile/screens/destinasi/detail_akomodasi.dart'; // Import detail page
+import 'package:tripmate_mobile/screens/destinasi/detail_akomodasi.dart'; // Perbaiki path jika perlu
 
 class AkomodasiWidget extends StatelessWidget {
   final UserModel currentUser;
@@ -73,7 +73,11 @@ class AkomodasiWidget extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => DetailAkomodasi(hotel: hotel),
+                                builder: (context) => DetailAkomodasiScreen(
+                                  hotelNama: hotel.nama,
+                                  kamarNama: '', // gunakan string kosong, bukan null
+                                  currentUser: currentUser,
+                                ),
                               ),
                             );
                           },
@@ -101,7 +105,10 @@ class AkomodasiWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                CardAkomodasiElegan(hotels: eleganHotels),
+                CardAkomodasiElegan(
+                  hotels: eleganHotels,
+                  currentUser: currentUser,
+                ),
               ],
 
               // Card Tipe Akomodasi (grid)

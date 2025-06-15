@@ -25,13 +25,20 @@ class RencanaModelAdapter extends TypeAdapter<RencanaModel> {
       endDate: fields[5] as String,
       sumDate: fields[6] as String,
       people: fields[7] as String,
+      imageBase64: fields[8] as String?,
+      akomodasi: fields[9] as String?,
+      kamarNama: fields[10] as String?,
+      biayaAkomodasi: fields[11] as int?,
+      transportasi: fields[12] as String?,
+      aktivitasSeru: fields[13] as String?,
+      kuliner: fields[14] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, RencanaModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.userId)
       ..writeByte(1)
@@ -47,7 +54,21 @@ class RencanaModelAdapter extends TypeAdapter<RencanaModel> {
       ..writeByte(6)
       ..write(obj.sumDate)
       ..writeByte(7)
-      ..write(obj.people);
+      ..write(obj.people)
+      ..writeByte(8)
+      ..write(obj.imageBase64)
+      ..writeByte(9)
+      ..write(obj.akomodasi)
+      ..writeByte(10)
+      ..write(obj.kamarNama)
+      ..writeByte(11)
+      ..write(obj.biayaAkomodasi)
+      ..writeByte(12)
+      ..write(obj.transportasi)
+      ..writeByte(13)
+      ..write(obj.aktivitasSeru)
+      ..writeByte(14)
+      ..write(obj.kuliner);
   }
 
   @override

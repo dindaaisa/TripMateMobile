@@ -15,9 +15,9 @@ class KelolaHotel extends StatefulWidget {
 
 class _KelolaHotelState extends State<KelolaHotel> {
   final _formKey = GlobalKey<FormState>();
-  final Box<HotelModel> hotelBox = Hive.box<HotelModel>('hotelBox');
-  final Box<HotelOptionsModel> optionsBox = Hive.box<HotelOptionsModel>('hotelOptionsBox');
-  final Box lokasiBox = Hive.box('lokasiBox');
+  late Box<HotelModel> hotelBox;
+  late Box<HotelOptionsModel> optionsBox;
+  late Box lokasiBox;
 
   final nameController = TextEditingController();
   final ratingController = TextEditingController();
@@ -35,13 +35,33 @@ class _KelolaHotelState extends State<KelolaHotel> {
 
   Map<String, IconData> facilitiesMap = {};
 
+  // Focus nodes untuk mengubah warna border
+  final FocusNode nameFocus = FocusNode();
+  final FocusNode ratingFocus = FocusNode();
+  final FocusNode reviewFocus = FocusNode();
+  final FocusNode priceFocus = FocusNode();
+  final FocusNode lokasiDetailFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
+    hotelBox = Hive.box<HotelModel>('hotelBox');
+    optionsBox = Hive.box<HotelOptionsModel>('hotelOptionsBox');
+    lokasiBox = Hive.box('lokasiBox');
     final options = optionsBox.get(0);
     if (options != null) {
       facilitiesMap = _buildFacilityIcons(options.facilities);
     }
+  }
+
+  @override
+  void dispose() {
+    nameFocus.dispose();
+    ratingFocus.dispose();
+    reviewFocus.dispose();
+    priceFocus.dispose();
+    lokasiDetailFocus.dispose();
+    super.dispose();
   }
 
   Map<String, IconData> _buildFacilityIcons(List<String> facilities) {
@@ -69,6 +89,42 @@ class _KelolaHotelState extends State<KelolaHotel> {
     }
   }
 
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
   void resetForm() {
     nameController.clear();
     ratingController.clear();
@@ -93,37 +149,147 @@ class _KelolaHotelState extends State<KelolaHotel> {
       setState(() {
         imageBase64 = base64Encode(bytes);
       });
+      _showSuccessSnackBar('Foto berhasil dipilih!');
     }
   }
 
-  void saveHotel() {
+  Future<bool> _showSaveConfirmation() async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Color(0xFFDC2626),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.add_circle_outline, color: Colors.white, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                editingIndex == null ? 'Konfirmasi Tambah Hotel' : 'Konfirmasi Update Hotel',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            editingIndex == null
+              ? 'Apakah Anda yakin ingin menambahkan hotel "${nameController.text}"?'
+              : 'Apakah Anda yakin ingin memperbarui data hotel "${nameController.text}"?',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    editingIndex == null ? 'Tambah' : 'Update',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
+  void saveHotel() async {
     if (_formKey.currentState!.validate() &&
         selectedFacilities.isNotEmpty &&
         selectedLokasi != null &&
         lokasiDetailController.text.isNotEmpty &&
         areaAkomodasi.isNotEmpty
     ) {
-      final hotel = HotelModel(
-        nama: nameController.text,
-        lokasi: selectedLokasi!,
-        rating: double.tryParse(ratingController.text) ?? 0.0,
-        reviewCount: int.tryParse(reviewCountController.text) ?? 0,
-        harga: int.tryParse(priceController.text) ?? 0,
-        tipe: selectedTipe ?? '',
-        fasilitas: List.from(selectedFacilities),
-        badge: List.from(selectedBadges),
-        imageBase64: imageBase64 ?? '',
-        lokasiDetail: lokasiDetailController.text,
-        areaAkomodasi: List.from(areaAkomodasi),
-      );
+      final confirmed = await _showSaveConfirmation();
+      if (!confirmed) return;
 
-      if (editingIndex == null) {
-        hotelBox.add(hotel);
-      } else {
-        hotelBox.putAt(editingIndex!, hotel);
+      try {
+        final hotel = HotelModel(
+          nama: nameController.text,
+          lokasi: selectedLokasi!,
+          rating: double.tryParse(ratingController.text) ?? 0.0,
+          reviewCount: int.tryParse(reviewCountController.text) ?? 0,
+          harga: int.tryParse(priceController.text) ?? 0,
+          tipe: selectedTipe ?? '',
+          fasilitas: List.from(selectedFacilities),
+          badge: List.from(selectedBadges),
+          imageBase64: imageBase64 ?? '',
+          lokasiDetail: lokasiDetailController.text,
+          areaAkomodasi: List.from(areaAkomodasi),
+        );
+
+        if (editingIndex == null) {
+          await hotelBox.add(hotel);
+          _showSuccessSnackBar('Hotel "${nameController.text}" berhasil ditambahkan!');
+        } else {
+          await hotelBox.putAt(editingIndex!, hotel);
+          _showSuccessSnackBar('Hotel "${nameController.text}" berhasil diperbarui!');
+        }
+        resetForm();
+      } catch (e) {
+        _showErrorSnackBar('Gagal menyimpan hotel. Silakan coba lagi.');
       }
-
-      resetForm();
+    } else {
+      _showErrorSnackBar('Mohon lengkapi semua field yang wajib diisi!');
     }
   }
 
@@ -144,81 +310,121 @@ class _KelolaHotelState extends State<KelolaHotel> {
         lokasiDetailController.text = hotel.lokasiDetail;
         areaAkomodasi = List<AreaAkomodasiModel>.from(hotel.areaAkomodasi);
       });
+      _showSuccessSnackBar('Data hotel "${hotel.nama}" dimuat untuk diedit');
     }
   }
 
-  void deleteHotel(int index) {
-    hotelBox.deleteAt(index);
-    setState(() {});
-  }
-
-  // === Area Akomodasi Management ===
-  void addAreaAkomodasi() async {
-    final namaController = TextEditingController();
-    final jarakController = TextEditingController();
-    String? selectedIcon = "location_on";
-
-    await showDialog(
+  Future<bool> _showDeleteConfirmation(String hotelName) async {
+    return await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Tambah Area Sekitar"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: namaController,
-              decoration: const InputDecoration(labelText: "Nama Area"),
-            ),
-            TextFormField(
-              controller: jarakController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Jarak (km)"),
-            ),
-            DropdownButtonFormField<String>(
-              value: selectedIcon,
-              items: [
-                "location_on", "beach_access", "shopping_bag", "restaurant",
-                "park", "museum", "local_activity"
-              ].map((icon) => DropdownMenuItem(
-                value: icon,
-                child: Row(
-                  children: [
-                    Icon(_iconDataFromName(icon)),
-                    const SizedBox(width: 6),
-                    Text(icon),
-                  ],
-                ),
-              )).toList(),
-              onChanged: (val) => selectedIcon = val,
-              decoration: const InputDecoration(labelText: "Icon"),
-            ),
-          ],
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Batal"),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (namaController.text.isNotEmpty && jarakController.text.isNotEmpty) {
-                setState(() {
-                  areaAkomodasi.add(
-                    AreaAkomodasiModel(
-                      nama: namaController.text,
-                      jarakKm: double.tryParse(jarakController.text) ?? 0,
-                      iconName: selectedIcon ?? "location_on",
+          child: const Row(
+            children: [
+              Icon(Icons.warning_outlined, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Konfirmasi Hapus Hotel',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'Apakah Anda yakin ingin menghapus hotel "$hotelName"?\n\nTindakan ini tidak dapat dibatalkan.',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
                     ),
-                  );
-                });
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text("Tambah"),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Hapus',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-    );
+    ) ?? false;
+  }
+
+  void deleteHotel(int index) async {
+    final hotel = hotelBox.getAt(index);
+    if (hotel != null) {
+      final confirmed = await _showDeleteConfirmation(hotel.nama);
+      if (confirmed) {
+        try {
+          await hotelBox.deleteAt(index);
+          _showSuccessSnackBar('Hotel "${hotel.nama}" berhasil dihapus!');
+          setState(() {});
+        } catch (e) {
+          _showErrorSnackBar('Gagal menghapus hotel. Silakan coba lagi.');
+        }
+      }
+    }
   }
 
   IconData _iconDataFromName(String name) {
@@ -254,8 +460,8 @@ class _KelolaHotelState extends State<KelolaHotel> {
               const Spacer(),
               TextButton.icon(
                 onPressed: addAreaAkomodasi,
-                icon: const Icon(Icons.add),
-                label: const Text('Tambah'),
+                icon: const Icon(Icons.add, color: Color(0xFFDC2626)),
+                label: const Text('Tambah', style: TextStyle(color: Color(0xFFDC2626))),
               )
             ],
           ),
@@ -267,18 +473,501 @@ class _KelolaHotelState extends State<KelolaHotel> {
           ...areaAkomodasi.map((area) => ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(_iconDataFromName(area.iconName)),
+                leading: Icon(_iconDataFromName(area.iconName), color: const Color(0xFFDC2626)),
                 title: Text(area.nama),
                 subtitle: Text('${area.jarakKm.toStringAsFixed(2)} km'),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                  onPressed: () {
-                    setState(() {
-                      areaAkomodasi.remove(area);
-                    });
+                  onPressed: () async {
+                    final confirmed = await _showDeleteAreaConfirmation(area.nama);
+                    if (confirmed) {
+                      setState(() {
+                        areaAkomodasi.remove(area);
+                      });
+                      _showSuccessSnackBar('Area "${area.nama}" berhasil dihapus!');
+                    }
                   },
                 ),
               )),
+        ],
+      ),
+    );
+  }
+
+  Future<void> addAreaAkomodasi() async {
+    final namaController = TextEditingController();
+    final jarakController = TextEditingController();
+    String? selectedIcon = "location_on";
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Color(0xFFDC2626),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.add_location_outlined, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                "Tambah Area Sekitar",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: namaController,
+              decoration: InputDecoration(
+                labelText: "Nama Area",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFDC2626)),
+                ),
+                labelStyle: const TextStyle(color: Colors.grey),
+                floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: jarakController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: "Jarak (km)",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFDC2626)),
+                ),
+                labelStyle: const TextStyle(color: Colors.grey),
+                floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: selectedIcon,
+              items: [
+                "location_on", "beach_access", "shopping_bag", "restaurant",
+                "park", "museum", "local_activity"
+              ].map((icon) => DropdownMenuItem(
+                value: icon,
+                child: Row(
+                  children: [
+                    Icon(_iconDataFromName(icon), color: Colors.black),
+                    const SizedBox(width: 6),
+                    Text(icon),
+                  ],
+                ),
+              )).toList(),
+              onChanged: (val) => selectedIcon = val,
+              decoration: InputDecoration(
+                labelText: "Icon",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFDC2626)),
+                ),
+                labelStyle: const TextStyle(color: Colors.grey),
+                floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                  child: const Text(
+                    "Batal",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (namaController.text.isNotEmpty && jarakController.text.isNotEmpty) {
+                      Navigator.pop(ctx, true);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    "Tambah",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && namaController.text.isNotEmpty && jarakController.text.isNotEmpty) {
+      setState(() {
+        areaAkomodasi.add(
+          AreaAkomodasiModel(
+            nama: namaController.text,
+            jarakKm: double.tryParse(jarakController.text) ?? 0,
+            iconName: selectedIcon ?? "location_on",
+          ),
+        );
+      });
+      _showSuccessSnackBar('Area "${namaController.text}" berhasil ditambahkan!');
+    }
+  }
+
+  Future<bool> _showDeleteAreaConfirmation(String areaName) async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.delete_outline, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Hapus Area',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'Apakah Anda yakin ingin menghapus area "$areaName"?',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Hapus',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required IconData icon,
+    String? hint,
+    TextInputType? type,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        keyboardType: type,
+        textAlign: TextAlign.left,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
+          ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+          alignLabelWithHint: true,
+        ),
+        validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
+      ),
+    );
+  }
+
+  Widget buildDropdownField({
+    required String label,
+    required IconData icon,
+    required List<String> items,
+    required String? selectedValue,
+    required void Function(String?) onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: DropdownButtonFormField<String>(
+        value: selectedValue,
+        isExpanded: true,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
+          ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+        ),
+        items: items.map((item) {
+          return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));
+        }).toList(),
+        validator: (val) => val == null || val.isEmpty ? 'Wajib dipilih' : null,
+      ),
+    );
+  }
+
+  Widget buildDropdownLokasiField({
+    required String label,
+    required IconData icon,
+    required List<String> items,
+    required String? selectedValue,
+    required void Function(String?) onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: DropdownButtonFormField<String>(
+        value: selectedValue,
+        isExpanded: true,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
+          ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+        ),
+        items: items.map((item) {
+          return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));
+        }).toList(),
+        validator: (val) => val == null || val.isEmpty ? 'Wajib pilih lokasi' : null,
+      ),
+    );
+  }
+
+  Widget buildMultiFacilityField(List<String> facilities) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Fasilitas Utama', style: TextStyle(fontSize: 16)),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: facilities.map((fasilitas) {
+              final selected = selectedFacilities.contains(fasilitas);
+              final icon = facilitiesMap[fasilitas] ?? Icons.check;
+              return FilterChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 16, color: selected ? Colors.white : Colors.black),
+                    const SizedBox(width: 4),
+                    Text(
+                      fasilitas,
+                      style: TextStyle(
+                        color: selected ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                selected: selected,
+                selectedColor: const Color(0xFFDC2626),
+                checkmarkColor: Colors.white,
+                backgroundColor: Colors.white,
+                side: BorderSide(color: selected ? const Color(0xFFDC2626) : Colors.grey),
+                onSelected: (bool value) {
+                  setState(() {
+                    if (value) {
+                      selectedFacilities.add(fasilitas);
+                    } else {
+                      selectedFacilities.remove(fasilitas);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          if (selectedFacilities.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text('Minimal pilih 1 fasilitas.',
+                  style: TextStyle(color: Colors.red, fontSize: 12)),
+            )
+        ],
+      ),
+    );
+  }
+
+  Widget buildMultiBadgeField(List<String> badges) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Badge Tambahan', style: TextStyle(fontSize: 16)),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: badges.map((badge) {
+              final selected = selectedBadges.contains(badge);
+              return FilterChip(
+                label: Text(
+                  badge,
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.black,
+                  ),
+                ),
+                selected: selected,
+                selectedColor: const Color(0xFFDC2626),
+                checkmarkColor: Colors.white,
+                backgroundColor: Colors.white,
+                side: BorderSide(color: selected ? const Color(0xFFDC2626) : Colors.grey),
+                onSelected: (bool value) {
+                  setState(() {
+                    if (value) {
+                      selectedBadges.add(badge);
+                    } else {
+                      selectedBadges.remove(badge);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
         ],
       ),
     );
@@ -328,8 +1017,10 @@ class _KelolaHotelState extends State<KelolaHotel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Masukkan Data Hotel',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              editingIndex == null ? 'Masukkan Data Hotel Baru' : 'Edit Data Hotel',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             Form(
               key: _formKey,
@@ -338,6 +1029,7 @@ class _KelolaHotelState extends State<KelolaHotel> {
                 children: [
                   buildTextField(
                     controller: nameController,
+                    focusNode: nameFocus,
                     label: 'Nama Hotel',
                     icon: Icons.business,
                     hint: 'Masukkan nama hotel',
@@ -351,6 +1043,7 @@ class _KelolaHotelState extends State<KelolaHotel> {
                   ),
                   buildTextField(
                     controller: lokasiDetailController,
+                    focusNode: lokasiDetailFocus,
                     label: 'Lokasi Detail (Alamat Lengkap)',
                     icon: Icons.place,
                     hint: 'Masukkan alamat lengkap hotel',
@@ -360,6 +1053,7 @@ class _KelolaHotelState extends State<KelolaHotel> {
                       Expanded(
                         child: buildTextField(
                           controller: ratingController,
+                          focusNode: ratingFocus,
                           label: 'Rating',
                           icon: Icons.star,
                           hint: 'Contoh: 4.8',
@@ -370,6 +1064,7 @@ class _KelolaHotelState extends State<KelolaHotel> {
                       Expanded(
                         child: buildTextField(
                           controller: reviewCountController,
+                          focusNode: reviewFocus,
                           label: 'Jumlah Reviews',
                           icon: Icons.people,
                           hint: 'Contoh: 205',
@@ -380,6 +1075,7 @@ class _KelolaHotelState extends State<KelolaHotel> {
                   ),
                   buildTextField(
                     controller: priceController,
+                    focusNode: priceFocus,
                     label: 'Harga kamar termurah',
                     icon: Icons.attach_money,
                     hint: 'Masukkan harga kamar termurah',
@@ -418,29 +1114,80 @@ class _KelolaHotelState extends State<KelolaHotel> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: imageBase64 != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(
-                                base64Decode(imageBase64!),
-                                fit: BoxFit.cover,
-                              ),
+                          ? Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.memory(
+                                    base64Decode(imageBase64!),
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(Icons.check, color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ],
                             )
-                          : const Center(child: Text('Unggah Foto')),
+                          : Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.add_photo_alternate, size: 40, color: Colors.black),
+                                  const SizedBox(height: 8),
+                                  const Text('Unggah Foto', style: TextStyle(color: Colors.black)),
+                                ],
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: saveHotel,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      if (editingIndex != null) ...[
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              resetForm();
+                              _showSuccessSnackBar('Form berhasil direset');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[600],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.clear),
+                            label: const Text("Batal Edit"),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: saveHotel,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: Icon(editingIndex == null ? Icons.add : Icons.update),
+                          label: Text(editingIndex == null ? "Tambah Hotel" : "Update Hotel"),
                         ),
                       ),
-                      icon: const Icon(Icons.save),
-                      label: const Text("Simpan"),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -452,6 +1199,21 @@ class _KelolaHotelState extends State<KelolaHotel> {
             ValueListenableBuilder(
               valueListenable: hotelBox.listenable(),
               builder: (context, Box<HotelModel> box, _) {
+                if (box.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        Icon(Icons.hotel_outlined, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum ada hotel yang ditambahkan',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  );
+                }
                 return ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -473,193 +1235,6 @@ class _KelolaHotelState extends State<KelolaHotel> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    String? hint,
-    TextInputType? type,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: type,
-        textAlign: TextAlign.left,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          prefixIcon: Icon(icon, size: 20),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
-          ),
-          alignLabelWithHint: true,
-        ),
-        validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
-      ),
-    );
-  }
-
-  Widget buildDropdownField({
-    required String label,
-    required IconData icon,
-    required List<String> items,
-    required String? selectedValue,
-    required void Function(String?) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: DropdownButtonFormField<String>(
-        value: selectedValue,
-        isExpanded: true,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, size: 20),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
-          ),
-        ),
-        items: items.map((item) {
-          return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));
-        }).toList(),
-        validator: (val) => val == null || val.isEmpty ? 'Wajib dipilih' : null,
-      ),
-    );
-  }
-
-  Widget buildDropdownLokasiField({
-    required String label,
-    required IconData icon,
-    required List<String> items,
-    required String? selectedValue,
-    required void Function(String?) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: DropdownButtonFormField<String>(
-        value: selectedValue,
-        isExpanded: true,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, size: 20),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
-          ),
-        ),
-        items: items.map((item) {
-          return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));
-        }).toList(),
-        validator: (val) => val == null || val.isEmpty ? 'Wajib pilih lokasi' : null,
-      ),
-    );
-  }
-
-  Widget buildMultiFacilityField(List<String> facilities) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Fasilitas Utama', style: TextStyle(fontSize: 16)),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: facilities.map((fasilitas) {
-              final selected = selectedFacilities.contains(fasilitas);
-              final icon = facilitiesMap[fasilitas] ?? Icons.check;
-              return FilterChip(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, size: 16),
-                    const SizedBox(width: 4),
-                    Text(fasilitas),
-                  ],
-                ),
-                selected: selected,
-                onSelected: (bool value) {
-                  setState(() {
-                    if (value) {
-                      selectedFacilities.add(fasilitas);
-                    } else {
-                      selectedFacilities.remove(fasilitas);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          if (selectedFacilities.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 6),
-              child: Text('Minimal pilih 1 fasilitas.',
-                  style: TextStyle(color: Colors.red, fontSize: 12)),
-            )
-        ],
-      ),
-    );
-  }
-
-  Widget buildMultiBadgeField(List<String> badges) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Badge Tambahan', style: TextStyle(fontSize: 16)),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: badges.map((badge) {
-              final selected = selectedBadges.contains(badge);
-              return FilterChip(
-                label: Text(badge),
-                selected: selected,
-                onSelected: (bool value) {
-                  setState(() {
-                    if (value) {
-                      selectedBadges.add(badge);
-                    } else {
-                      selectedBadges.remove(badge);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-        ],
       ),
     );
   }

@@ -19,6 +19,9 @@ class _HomeNavigationState extends State<HomeNavigation> {
   bool _isLoading = true;
   UserModel? _currentUser;
 
+  // Untuk navigasi langsung ke kategori pada Destinasi
+  String? _destinasiInitialCategory;
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +45,16 @@ class _HomeNavigationState extends State<HomeNavigation> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      // Reset kategori ketika pindah tab selain destinasi
+      if (index != 0) _destinasiInitialCategory = null;
+    });
+  }
+
+  // Untuk dipanggil dari child, misal RencanaScreen/NewPlanningPageBody, agar langsung buka kategori tertentu di Destinasi
+  void openDestinasiTab(String initialCategory) {
+    setState(() {
+      _selectedIndex = 0;
+      _destinasiInitialCategory = initialCategory;
     });
   }
 
@@ -55,15 +68,30 @@ class _HomeNavigationState extends State<HomeNavigation> {
       );
     }
 
-    final List<Widget> screens = [
-      DestinasiScreen(currentUser: _currentUser!),
-      RencanaScreen(currentUser: _currentUser!),
-      RiwayatScreen(currentUser: _currentUser!),
-      ProfilScreen(currentUser: _currentUser!),
-    ];
+    Widget getScreen(int index) {
+      switch (index) {
+        case 0:
+          return DestinasiScreen(
+            currentUser: _currentUser!,
+            initialCategory: _destinasiInitialCategory ?? 'Akomodasi',
+          );
+        case 1:
+          return RencanaScreen(
+            currentUser: _currentUser!,
+            // Kirim callback agar NewPlanning bisa navigasi ke Destinasi tab
+            onCategoryTap: openDestinasiTab,
+          );
+        case 2:
+          return RiwayatScreen(currentUser: _currentUser!);
+        case 3:
+          return ProfilScreen(currentUser: _currentUser!);
+        default:
+          return const SizedBox.shrink();
+      }
+    }
 
     return Scaffold(
-      body: screens[_selectedIndex],
+      body: getScreen(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
