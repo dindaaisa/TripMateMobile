@@ -34,6 +34,8 @@ class RencanaModel extends HiveObject {
   final String? aktivitasSeru;
   @HiveField(14)
   final String? kuliner;
+  @HiveField(15)
+  bool isPaid; // Tambahkan field ini
 
   RencanaModel({
     required this.userId,
@@ -51,6 +53,7 @@ class RencanaModel extends HiveObject {
     this.transportasi,
     this.aktivitasSeru,
     this.kuliner,
+    this.isPaid = false, // default false
   });
 
   RencanaModel copyWith({
@@ -69,6 +72,7 @@ class RencanaModel extends HiveObject {
     String? transportasi,
     String? aktivitasSeru,
     String? kuliner,
+    bool? isPaid,
   }) {
     return RencanaModel(
       userId: userId ?? this.userId,
@@ -86,6 +90,7 @@ class RencanaModel extends HiveObject {
       transportasi: transportasi ?? this.transportasi,
       aktivitasSeru: aktivitasSeru ?? this.aktivitasSeru,
       kuliner: kuliner ?? this.kuliner,
+      isPaid: isPaid ?? this.isPaid,
     );
   }
 }

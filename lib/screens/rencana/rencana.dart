@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tripmate_mobile/models/user_model.dart';
 import 'package:tripmate_mobile/models/rencana_model.dart';
 import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
 import 'new_planning.dart';
 
 class RencanaScreen extends StatefulWidget {
@@ -43,8 +44,9 @@ class _RencanaScreenState extends State<RencanaScreen> {
   void _refreshUserPlans() {
     if (_rencanaBox != null) {
       setState(() {
+        // Hanya tampilkan rencana yang BELUM DIBAYAR (isPaid == false / null)
         _userPlans = _rencanaBox!.values
-            .where((plan) => plan.userId == widget.currentUser.email)
+            .where((plan) => plan.userId == widget.currentUser.email && (plan.isPaid == false || plan.isPaid == null))
             .toList();
         _userPlans.sort((a, b) {
           try {
@@ -328,6 +330,9 @@ class RencanaCard extends StatelessWidget {
     final aktivitasSeru = (plan.aktivitasSeru == null || plan.aktivitasSeru!.trim().isEmpty) ? "-" : plan.aktivitasSeru!;
     final kuliner = (plan.kuliner == null || plan.kuliner!.trim().isEmpty) ? "-" : plan.kuliner!;
 
+    // Ambil dan tampilkan jumlah hari/malam jika sumDate menyimpan format "x Hari, y Malam"
+    final String sumDate = plan.sumDate.isNotEmpty ? plan.sumDate : "-";
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -489,6 +494,32 @@ class RencanaCard extends StatelessWidget {
                           fontSize: 10,
                           color: Color(0xFF666666),
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule, size: 12, color: Color(0xFF666666)),
+                      const SizedBox(width: 4),
+                      Text(
+                        sumDate,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF666666),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.attach_money, size: 14, color: Color(0xFF666666)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Total: Rp ${NumberFormat.decimalPattern('id').format(plan.biayaAkomodasi ?? 0)}',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF666666), fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),

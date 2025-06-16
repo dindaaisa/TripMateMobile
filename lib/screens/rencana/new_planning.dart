@@ -1,8 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:tripmate_mobile/models/rencana_model.dart';
 import 'package:tripmate_mobile/models/user_model.dart';
 import 'package:tripmate_mobile/models/akomodasi_preview_model.dart';
@@ -11,6 +8,90 @@ import 'package:tripmate_mobile/models/kamar_model.dart';
 import 'package:tripmate_mobile/widgets/preview_akomodasi_card.dart';
 import 'package:tripmate_mobile/widgets/detail_perjalanan.dart';
 import 'package:tripmate_mobile/shared/location_state.dart';
+import 'package:tripmate_mobile/screens/rencana/konfirmasi_rencana.dart';
+import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+
+class BarReserve extends StatelessWidget {
+  final int total;
+  final VoidCallback? onKonfirmasi;
+
+  const BarReserve({super.key, required this.total, this.onKonfirmasi});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 90,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment(0.50, -0.00),
+                  end: Alignment(0.50, 1.00),
+                  colors: [const Color(0x00D9D9D9), const Color(0xFF737373)],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 27,
+            right: 0,
+            child: Container(
+              height: 63,
+              color: Colors.white,
+            ),
+          ),
+          Positioned(
+            right: 16,
+            top: 39,
+            child: GestureDetector(
+              onTap: onKonfirmasi,
+              child: Container(
+                width: 159,
+                height: 42,
+                decoration: ShapeDecoration(
+                  color: const Color(0xFFDC2626),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  'Konfirmasi Rencana',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 19,
+            top: 51,
+            child: Text(
+              'Rp ${NumberFormat.decimalPattern('id').format(total)}',
+              style: const TextStyle(
+                color: Color(0xFFDC2626),
+                fontSize: 16,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class NewPlanningPageBody extends StatefulWidget {
   final UserModel currentUser;
@@ -200,11 +281,10 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
       namaKamar: kamar.nama,
       sizeKasur: kamar.tipeKasur,
       badges: kamar.badges,
-      estimasiBiaya: kamar.harga,
+      estimasiBiaya: plan.biayaAkomodasi ?? kamar.harga,
     );
   }
 
-  // --- FUNGSI UNTUK MEMANGGIL KATEGORI DESTINASI LEWAT NAVBAR (HOME NAVIGATION)
   void _onAkomodasiTap() {
     widget.onCategoryTap?.call('Akomodasi');
   }
@@ -217,7 +297,6 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
   void _onKulinerTap() {
     widget.onCategoryTap?.call('Kuliner');
   }
-  // ---
 
   Future<void> _onAkomodasiDelete() async {
     final confirm = await showDialog<bool>(
@@ -257,6 +336,12 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
         }
       }
     }
+  }
+
+  /// Ambil total biaya dari previewPlan jika ada (untuk edit/preview), jika tidak fallback ke preview (baru buat)
+  int get estimasiTotalBiaya {
+    if (_previewPlan?.biayaAkomodasi != null) return _previewPlan!.biayaAkomodasi!;
+    return _akomodasiPreview?.estimasiBiaya ?? 0;
   }
 
   void _savePlan() async {
@@ -642,8 +727,8 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
               const SizedBox(width: 7),
               const Expanded(child: Text('Akomodasi')),
               Text(
-                _akomodasiPreview?.estimasiBiaya != null
-                    ? 'Rp ${_akomodasiPreview!.estimasiBiaya}'
+                estimasiTotalBiaya > 0
+                    ? 'Rp ${NumberFormat.decimalPattern('id').format(estimasiTotalBiaya)}'
                     : 'Rp -',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
@@ -679,24 +764,6 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
         ],
       ),
     );
-  }
-
-  void _onCategoryTap(String category) {
-    setState(() {
-      if (category == "Akomodasi") {
-        _akomodasiSelected = !_akomodasiSelected;
-        if (!_akomodasiSelected) _akomodasiPreview = null;
-      } else if (category == "Transportasi") {
-        _transportasiSelected = !_transportasiSelected;
-      } else if (category == "Aktivitas Seru") {
-        _aktivitasSelected = !_aktivitasSelected;
-      } else if (category == "Kuliner") {
-        _kulinerSelected = !_kulinerSelected;
-      }
-    });
-    if (widget.onCategoryTap != null) {
-      widget.onCategoryTap!(category);
-    }
   }
 
   @override
@@ -810,8 +877,10 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
                                 final start = DateTime.tryParse(_startDateController.text);
                                 final end = picked;
                                 if (start != null) {
-                                  final diff = end.difference(start).inDays + 1;
-                                  _sumDateController.text = diff.toString();
+                                  final diff = end.difference(start).inDays;
+                                  int jumlahMalam = diff >= 0 ? diff + 1 : 1;
+                                  int jumlahHari = jumlahMalam + 1;
+                                  _sumDateController.text = "$jumlahHari Hari, $jumlahMalam Malam";
                                 }
                               }
                             }
@@ -929,6 +998,21 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
           ),
         ],
       ),
+      bottomNavigationBar: _isEditMode
+          ? BarReserve(
+              total: estimasiTotalBiaya,
+              onKonfirmasi: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => KonfirmasiRencanaPage(
+                      rencana: _previewPlan!,
+                    ),
+                  ),
+                );
+              },
+            )
+          : null,
     );
   }
 }

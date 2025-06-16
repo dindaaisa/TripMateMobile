@@ -7,6 +7,7 @@ import 'package:tripmate_mobile/models/kamar_model.dart';
 import 'package:tripmate_mobile/models/rencana_model.dart';
 import 'package:tripmate_mobile/models/user_model.dart';
 import 'package:tripmate_mobile/widgets/tambah_dalam_rencana.dart';
+import 'package:tripmate_mobile/screens/rencana/new_planning.dart';
 
 class KamarTersediaWidget extends StatefulWidget {
   final HotelModel hotel;
@@ -28,7 +29,8 @@ class KamarTersediaWidget extends StatefulWidget {
 
 class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
   late List<DateTime> tanggalPilihan;
-  int selectedIndex = 0;
+  DateTime? rangeStart;
+  DateTime? rangeEnd;
   late DateTime today;
 
   final ScrollController _scrollController = ScrollController();
@@ -41,14 +43,39 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
       30,
       (i) => DateTime(today.year, today.month, today.day).add(Duration(days: i)),
     );
+    rangeStart = tanggalPilihan[0];
+    rangeEnd = tanggalPilihan[0];
   }
 
-  Future<void> _pickTanggalLewatKalender() async {
-    final picked = await showDatePicker(
+  void _onTanggalTap(int idx) {
+    final tapped = tanggalPilihan[idx];
+    setState(() {
+      if (rangeStart == null || (rangeStart != null && rangeEnd != null)) {
+        // Mulai range baru
+        rangeStart = tapped;
+        rangeEnd = null;
+      } else if (rangeStart != null && rangeEnd == null) {
+        if (tapped.isBefore(rangeStart!)) {
+          rangeStart = tapped;
+          rangeEnd = null;
+        } else if (tapped.isAfter(rangeStart!)) {
+          rangeEnd = tapped;
+        } else {
+          // Tap tanggal yang sama -> 1 malam (default)
+          rangeEnd = tapped;
+        }
+      }
+    });
+  }
+
+  Future<void> _pickTanggalRange() async {
+    final range = await showDateRangePicker(
       context: context,
-      initialDate: tanggalPilihan[selectedIndex],
       firstDate: today,
       lastDate: today.add(const Duration(days: 29)),
+      initialDateRange: (rangeStart != null && rangeEnd != null)
+          ? DateTimeRange(start: rangeStart!, end: rangeEnd!)
+          : DateTimeRange(start: tanggalPilihan[0], end: tanggalPilihan[0]),
       locale: const Locale('id', 'ID'),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
@@ -57,18 +84,31 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
         child: child!,
       ),
     );
-    if (picked != null) {
-      final idx = tanggalPilihan.indexWhere(
-        (t) =>
-            t.year == picked.year &&
-            t.month == picked.month &&
-            t.day == picked.day,
-      );
-      if (idx != -1) {
-        setState(() => selectedIndex = idx);
-        _scrollController.jumpTo(idx * 74.0);
-      }
+    if (range != null) {
+      setState(() {
+        rangeStart = range.start;
+        rangeEnd = range.end;
+      });
     }
+  }
+
+  /// Hitungan malam = selisih hari + 1 (dua tanggal = dua malam)
+  int getJumlahMalam() {
+    if (rangeStart == null || rangeEnd == null) return 1;
+    final diff = rangeEnd!.difference(rangeStart!).inDays;
+    return diff >= 0 ? diff + 1 : 1;
+  }
+
+  /// Hitungan hari = jumlah malam + 1
+  int getJumlahHari() {
+    return getJumlahMalam() + 1;
+  }
+
+  bool _isInRange(DateTime day) {
+    if (rangeStart == null) return false;
+    if (rangeEnd == null) return day == rangeStart;
+    return (day.isAtSameMomentAs(rangeStart!) || day.isAtSameMomentAs(rangeEnd!)) ||
+        (day.isAfter(rangeStart!) && day.isBefore(rangeEnd!));
   }
 
   @override
@@ -86,109 +126,141 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 84,
-          child: ListView.separated(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            itemCount: tanggalPilihan.length + 1,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, idx) {
-              if (idx == 0) {
-                return GestureDetector(
-                  onTap: _pickTanggalLewatKalender,
-                  child: Container(
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(
-                        color: const Color(0xFFDC2626),
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.calendar_today,
-                        color: Color(0xFFDC2626),
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                );
-              } else {
-                final tgl = tanggalPilihan[idx - 1];
-                final hari = DateFormat.E('id_ID').format(tgl);
-                final tanggal = DateFormat('d MMM', 'id_ID').format(tgl);
-                final isSelected = selectedIndex == (idx - 1);
+    final String tanggalStr = (rangeStart == null || rangeEnd == null)
+        ? ""
+        : "${DateFormat('EEE, dd MMM', 'id_ID').format(rangeStart!)} - ${DateFormat('EEE, dd MMM', 'id_ID').format(rangeEnd!)}";
+    final int jumlahMalam = getJumlahMalam();
+    final int jumlahHari = getJumlahHari();
 
-                return GestureDetector(
-                  onTap: () {
-                    setState(() => selectedIndex = idx - 1);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFDC2626) : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        width: 1,
-                        color: const Color(0xFFDC2626),
+    Color getRangeBgColor() => const Color(0xFFDC2626).withOpacity(0.07);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 84,
+            child: ListView.separated(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              itemCount: tanggalPilihan.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, idx) {
+                if (idx == 0) {
+                  return GestureDetector(
+                    onTap: _pickTanggalRange,
+                    child: Container(
+                      width: 68,
+                      height: 68,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(
+                          color: const Color(0xFFDC2626),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      boxShadow: [
-                        if (isSelected)
-                          BoxShadow(
-                            color: const Color(0x44DC2626),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                      ],
+                      child: const Center(
+                        child: Icon(
+                          Icons.calendar_today,
+                          color: Color(0xFFDC2626),
+                          size: 32,
+                        ),
+                      ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          hari,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFFDC2626),
-                            fontSize: 14,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w600,
-                          ),
+                  );
+                } else {
+                  final tgl = tanggalPilihan[idx - 1];
+                  final hari = DateFormat.E('id_ID').format(tgl);
+                  final tanggal = DateFormat('d MMM', 'id_ID').format(tgl);
+                  final isSelected = _isInRange(tgl);
+
+                  return GestureDetector(
+                    onTap: () => _onTanggalTap(idx - 1),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 68,
+                      height: 68,
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFFDC2626) : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          width: 1,
+                          color: const Color(0xFFDC2626),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          tanggal,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFFDC2626),
-                            fontSize: 13,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w500,
+                        boxShadow: [
+                          if (isSelected)
+                            BoxShadow(
+                              color: const Color(0x44DC2626),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            hari,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : const Color(0xFFDC2626),
+                              fontSize: 14,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            tanggal,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : const Color(0xFFDC2626),
+                              fontSize: 13,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (rangeStart != null && rangeEnd != null)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+              margin: const EdgeInsets.only(bottom: 6),
+              decoration: BoxDecoration(
+                color: getRangeBgColor(),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.date_range, size: 18, color: Color(0xFFDC2626)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "$tanggalStr ($jumlahHari Hari, $jumlahMalam Malam)",
+                      style: const TextStyle(
+                        color: Color(0xFFDC2626),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                );
-              }
-            },
-          ),
-        ),
-        const SizedBox(height: 24),
-        ...semuaKamar.map((kamar) {
-          final imgBytes = kamar.imageBase64.isNotEmpty
-              ? base64Decode(kamar.imageBase64)
-              : null;
-          final isSelected = widget.selectedKamarNama != null && widget.selectedKamarNama == kamar.nama;
-          return Center(
-            child: Container(
-              width: 355,
+                ],
+              ),
+            ),
+          ...semuaKamar.map((kamar) {
+            final imgBytes = kamar.imageBase64.isNotEmpty
+                ? base64Decode(kamar.imageBase64)
+                : null;
+            final isSelected = widget.selectedKamarNama != null && widget.selectedKamarNama == kamar.nama;
+            final totalHarga = (kamar.harga ?? 0) * jumlahMalam;
+            return Container(
+              width: double.infinity,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected ? const Color(0xFFDC2626).withOpacity(0.12) : Colors.white,
@@ -220,12 +292,12 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                     child: imgBytes != null
                         ? Image.memory(
                             imgBytes,
-                            width: 355,
+                            width: double.infinity,
                             height: 142,
                             fit: BoxFit.cover,
                           )
                         : Container(
-                            width: 355,
+                            width: double.infinity,
                             height: 142,
                             color: Colors.grey[200],
                             child: const Icon(Icons.image, size: 60, color: Colors.grey),
@@ -253,7 +325,7 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                               ),
                             ),
                             Text(
-                              'Rp ${formatter.format(kamar.harga)}',
+                              'Rp ${formatter.format(kamar.harga)} /mlm',
                               textAlign: TextAlign.right,
                               style: TextStyle(
                                 color: isSelected ? const Color(0xFFDC2626) : const Color(0xFFDC2626),
@@ -322,20 +394,49 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                             ),
                           ),
                         const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "$jumlahHari Hari, $jumlahMalam Malam",
+                              style: const TextStyle(
+                                color: Color(0xFFDC2626),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              "Total: Rp ${formatter.format(totalHarga)}",
+                              style: const TextStyle(
+                                color: Color(0xFFDC2626),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
                         Align(
                           alignment: Alignment.bottomRight,
                           child: Padding(
-                            padding: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.only(top: 12),
                             child: SizedBox(
                               width: 102,
                               height: 33,
                               child: ElevatedButton(
                                 onPressed: () async {
+                                  if (rangeStart == null || rangeEnd == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Pilih tanggal cek-in & cek-out terlebih dahulu."),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
                                   if (widget.onKamarSelected != null) {
-                                    // Mode pilih kamar pada rencana (akan pop context)
                                     widget.onKamarSelected!(kamar.nama);
                                   } else {
-                                    // Mode tambah ke rencana (pop up style modern)
                                     final box = Hive.box<RencanaModel>('rencanaBox');
                                     final userPlans = box.values
                                         .where((plan) => plan.userId == widget.currentUser?.email)
@@ -346,12 +447,29 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                                       currentUser: widget.currentUser!,
                                       userPlans: userPlans,
                                       onPlanSelected: (RencanaModel selectedPlan) async {
+                                        final planStart = DateTime.tryParse(selectedPlan.startDate);
+                                        final planEnd = DateTime.tryParse(selectedPlan.endDate);
+
+                                        if (planStart == null || planEnd == null ||
+                                            planStart != rangeStart || planEnd != rangeEnd) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text("Tanggal rencana dan kamar harus sama!"),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
                                         final idx = selectedPlan.key as int;
                                         final updatedPlan = selectedPlan.copyWith(
                                           akomodasi: widget.hotel.nama,
                                           kamarNama: kamar.nama,
-                                          biayaAkomodasi: kamar.harga,
+                                          biayaAkomodasi: totalHarga,
                                           imageBase64: widget.hotel.imageBase64,
+                                          startDate: DateFormat('yyyy-MM-dd').format(rangeStart!),
+                                          endDate: DateFormat('yyyy-MM-dd').format(rangeEnd!),
+                                          sumDate: "$jumlahHari Hari $jumlahMalam Malam",
                                         );
                                         await box.putAt(idx, updatedPlan);
                                         if (mounted) {
@@ -361,8 +479,18 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                                         }
                                       },
                                       onAddPlanningBaru: () {
-                                        // TODO: Tambah logic jika ingin navigasi ke halaman tambah planning baru
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => NewPlanningPageBody(
+                                              currentUser: widget.currentUser!,
+                                              isNewPlanMode: true,
+                                            ),
+                                          ),
+                                        );
                                       },
+                                      selectedStartDate: rangeStart!,
+                                      selectedEndDate: rangeEnd!,
                                     );
                                   }
                                 },
@@ -392,10 +520,10 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                   ),
                 ],
               ),
-            ),
-          );
-        }),
-      ],
+            );
+          }),
+        ],
+      ),
     );
   }
 

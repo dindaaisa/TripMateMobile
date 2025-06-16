@@ -8,7 +8,8 @@ import '../screens/riwayat/riwayat.dart';
 import '../screens/profil/profil.dart';
 
 class HomeNavigation extends StatefulWidget {
-  const HomeNavigation({super.key});
+  final int initialTabIndex;
+  const HomeNavigation({super.key, this.initialTabIndex = 0});
 
   @override
   State<HomeNavigation> createState() => _HomeNavigationState();
@@ -18,13 +19,12 @@ class _HomeNavigationState extends State<HomeNavigation> {
   int _selectedIndex = 0;
   bool _isLoading = true;
   UserModel? _currentUser;
-
-  // Untuk navigasi langsung ke kategori pada Destinasi
   String? _destinasiInitialCategory;
 
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialTabIndex;
     _checkUserLogin();
   }
 
@@ -45,7 +45,6 @@ class _HomeNavigationState extends State<HomeNavigation> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      // Reset kategori ketika pindah tab selain destinasi
       if (index != 0) _destinasiInitialCategory = null;
     });
   }
@@ -78,11 +77,10 @@ class _HomeNavigationState extends State<HomeNavigation> {
         case 1:
           return RencanaScreen(
             currentUser: _currentUser!,
-            // Kirim callback agar NewPlanning bisa navigasi ke Destinasi tab
             onCategoryTap: openDestinasiTab,
           );
         case 2:
-          return RiwayatScreen(currentUser: _currentUser!);
+          return RiwayatPage(currentUserId: _currentUser!.email);
         case 3:
           return ProfilScreen(currentUser: _currentUser!);
         default:
@@ -95,7 +93,7 @@ class _HomeNavigationState extends State<HomeNavigation> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.red,
+        selectedItemColor: const Color(0xFFDC2626),
         unselectedItemColor: Colors.grey,
         selectedFontSize: screenWidth > 375 ? 13 : 11,
         unselectedFontSize: screenWidth > 375 ? 12 : 10,

@@ -9,6 +9,8 @@ void showTambahDalamRencanaModal({
   required List<RencanaModel> userPlans,
   required void Function(RencanaModel) onPlanSelected,
   VoidCallback? onAddPlanningBaru,
+  required DateTime selectedStartDate,
+  required DateTime selectedEndDate,
 }) {
   showModalBottomSheet(
     context: context,
@@ -53,7 +55,7 @@ void showTambahDalamRencanaModal({
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Tambah Planning Baru', style: TextStyle(fontSize: 15)),
+                label: const Text('Tambah Planning Baru', style: TextStyle(fontSize: 15, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFDC2626),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -129,13 +131,22 @@ void showTambahDalamRencanaModal({
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                // Misal: "2 Hari 1 Malam" jika sumDate = "2"
-                                "${plan.sumDate} Hari"
-                                "${int.tryParse(plan.sumDate) != null && int.parse(plan.sumDate) > 1 ? ' ${int.parse(plan.sumDate) - 1} Malam' : ''}",
+                                plan.sumDate,
                                 style: const TextStyle(
                                   color: Colors.black87,
                                   fontSize: 12,
                                 ),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.calendar_today, size: 12, color: Color(0xFFDC2626)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "${plan.startDate} - ${plan.endDate}",
+                                    style: const TextStyle(fontSize: 11, color: Color(0xFFDC2626)),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -144,6 +155,29 @@ void showTambahDalamRencanaModal({
                       IconButton(
                         icon: const Icon(Icons.add_circle, color: Color(0xFFDC2626), size: 32),
                         onPressed: () {
+                          // Cek tanggal rencana dan tanggal kamar
+                          final planStart = DateTime.tryParse(plan.startDate);
+                          final planEnd = DateTime.tryParse(plan.endDate);
+
+                          bool isTanggalSama = planStart != null && planEnd != null &&
+                              planStart.year == selectedStartDate.year &&
+                              planStart.month == selectedStartDate.month &&
+                              planStart.day == selectedStartDate.day &&
+                              planEnd.year == selectedEndDate.year &&
+                              planEnd.month == selectedEndDate.month &&
+                              planEnd.day == selectedEndDate.day;
+
+                          if (!isTanggalSama) {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Tanggal pada rencana dan tanggal kamar harus sama!"),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
                           Navigator.pop(ctx);
                           onPlanSelected(plan);
                         },

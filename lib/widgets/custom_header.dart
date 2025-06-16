@@ -34,7 +34,10 @@ class _CustomHeaderState extends State<CustomHeader> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final topBarHeight = screenWidth * 0.13;
+
+    // Gunakan MediaQuery padding top agar header menempel ke atas device
+    final topSafe = MediaQuery.of(context).padding.top;
+    final topBarHeight = 0.0; // Hilangkan padding topbar custom, pakai SafeArea saja
     final barHeight = screenWidth * 0.12;
     final searchBoxHeight = screenWidth * 0.08 + 14;
 
@@ -42,86 +45,75 @@ class _CustomHeaderState extends State<CustomHeader> {
       future: _lokasiListFuture,
       builder: (context, snapshot) {
         final locations = snapshot.data ?? ["Denpasar, Bali"];
-        return SizedBox(
-          height: topBarHeight + barHeight + searchBoxHeight + 16,
-          child: Stack(
+        return Container(
+          color: Colors.white,
+          child: Column(
             children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: topBarHeight,
-                child: Container(color: Colors.white),
-              ),
-              // Dropdown lokasi
-              Positioned(
-                top: topBarHeight,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045),
-                  height: barHeight,
-                  color: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on, size: 18, color: Colors.black),
-                          const SizedBox(width: 4),
-                          ValueListenableBuilder<String>(
-                            valueListenable: LocationState.selectedLocation,
-                            builder: (context, selectedLocation, _) {
-                              // Pastikan value di dropdown valid (default ke first jika null)
-                              final validDropdownValue = locations.contains(selectedLocation)
-                                  ? selectedLocation
-                                  : locations.first;
-                              return DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: validDropdownValue,
-                                  icon: const Icon(Icons.arrow_drop_down),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                  items: locations.map((loc) {
-                                    return DropdownMenuItem(
-                                      value: loc,
-                                      child: Text(loc),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) async {
-                                    if (value != null) {
-                                      // Update global location state
-                                      LocationState.selectedLocation.value = value;
-                                      // Simpan ke Hive untuk persist
-                                      final selectedLocationBox = await Hive.openBox('selectedLocationBox');
-                                      selectedLocationBox.put('selected', value);
-                                    }
-                                  },
+              SizedBox(height: topSafe), // SafeArea
+              // Dropdown lokasi dan icon bar
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045),
+                height: barHeight,
+                color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 18, color: Colors.black),
+                        const SizedBox(width: 4),
+                        ValueListenableBuilder<String>(
+                          valueListenable: LocationState.selectedLocation,
+                          builder: (context, selectedLocation, _) {
+                            final validDropdownValue = locations.contains(selectedLocation)
+                                ? selectedLocation
+                                : locations.first;
+                            return DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: validDropdownValue,
+                                icon: const Icon(Icons.arrow_drop_down),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black,
                                 ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          _notificationIcon(),
-                          const SizedBox(width: 8),
-                          _languageIcon(),
-                        ],
-                      ),
-                    ],
-                  ),
+                                items: locations.map((loc) {
+                                  return DropdownMenuItem(
+                                    value: loc,
+                                    child: Text(loc),
+                                  );
+                                }).toList(),
+                                onChanged: (value) async {
+                                  if (value != null) {
+                                    LocationState.selectedLocation.value = value;
+                                    final selectedLocationBox = await Hive.openBox('selectedLocationBox');
+                                    selectedLocationBox.put('selected', value);
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        _notificationIcon(),
+                        const SizedBox(width: 8),
+                        _languageIcon(),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               // Search bar
-              Positioned(
-                top: topBarHeight + barHeight + 8,
-                left: screenWidth * 0.045,
-                right: screenWidth * 0.045,
+              Padding(
+                padding: EdgeInsets.only(
+                  top: 8,
+                  left: screenWidth * 0.045,
+                  right: screenWidth * 0.045,
+                  bottom: 10,
+                ),
                 child: Row(
                   children: [
                     Expanded(

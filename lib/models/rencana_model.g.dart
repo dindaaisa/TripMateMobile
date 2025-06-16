@@ -32,13 +32,14 @@ class RencanaModelAdapter extends TypeAdapter<RencanaModel> {
       transportasi: fields[12] as String?,
       aktivitasSeru: fields[13] as String?,
       kuliner: fields[14] as String?,
+      isPaid: fields[15] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, RencanaModel obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.userId)
       ..writeByte(1)
@@ -68,7 +69,9 @@ class RencanaModelAdapter extends TypeAdapter<RencanaModel> {
       ..writeByte(13)
       ..write(obj.aktivitasSeru)
       ..writeByte(14)
-      ..write(obj.kuliner);
+      ..write(obj.kuliner)
+      ..writeByte(15)
+      ..write(obj.isPaid);
   }
 
   @override
