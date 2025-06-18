@@ -1,17 +1,20 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:hive/hive.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tripmate_mobile/models/rencana_model.dart';
 import 'package:tripmate_mobile/models/user_model.dart';
 import 'package:tripmate_mobile/models/akomodasi_preview_model.dart';
 import 'package:tripmate_mobile/models/hotel_model.dart';
 import 'package:tripmate_mobile/models/kamar_model.dart';
+import 'package:tripmate_mobile/models/pesawat_model.dart';
+import 'package:tripmate_mobile/models/mobil_model.dart';
 import 'package:tripmate_mobile/widgets/preview_akomodasi_card.dart';
+import 'package:tripmate_mobile/widgets/preview_transportasi_card.dart';
 import 'package:tripmate_mobile/widgets/detail_perjalanan.dart';
 import 'package:tripmate_mobile/shared/location_state.dart';
 import 'package:tripmate_mobile/screens/rencana/konfirmasi_rencana.dart';
-import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
 
 class BarReserve extends StatelessWidget {
   final int total;
@@ -132,11 +135,6 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
   String? _selectedOrigin;
   String? _selectedDestination;
 
-  bool _akomodasiSelected = false;
-  bool _transportasiSelected = false;
-  bool _aktivitasSelected = false;
-  bool _kulinerSelected = false;
-
   late final List<String> _cities;
 
   String? _imageBase64;
@@ -148,6 +146,9 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
   String? _selectedHotelNama;
   String? _selectedKamarNama;
 
+  PesawatModel? _selectedPesawat;
+  MobilModel? _selectedMobil;
+
   @override
   void initState() {
     super.initState();
@@ -157,7 +158,31 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
 
   Future<void> _initHiveBoxesAndPreview() async {
     await _initHiveBoxes();
-    if (!widget.isNewPlanMode && widget.selectedPlan != null) {
+
+    if (widget.previewPlanIndex != null && widget.previewPlanIndex! >= 0) {
+      final plan = _rencanaBox!.getAt(widget.previewPlanIndex!);
+      if (plan != null) {
+        _loadSelectedPlan(plan);
+        setState(() {
+          _isEditMode = !widget.isNewPlanMode;
+          _previewPlan = plan;
+          _previewPlanIndex = widget.previewPlanIndex;
+          _selectedHotelNama = plan.akomodasi;
+          _selectedKamarNama = plan.kamarNama;
+          _akomodasiPreview = _mapPlanToPreview(plan);
+
+          // Load pesawat data
+          if (plan.transportasi != null && plan.transportasi!.isNotEmpty) {
+            _loadPesawatFromPlan(plan);
+          }
+          
+          // Load mobil data
+          if (plan.mobil != null && plan.mobil!.isNotEmpty) {
+            _loadMobilFromPlan(plan);
+          }
+        });
+      }
+    } else if (!widget.isNewPlanMode && widget.selectedPlan != null) {
       _loadSelectedPlan(widget.selectedPlan!);
       setState(() {
         _isEditMode = true;
@@ -166,7 +191,58 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
         _selectedHotelNama = widget.selectedPlan!.akomodasi;
         _selectedKamarNama = widget.selectedPlan!.kamarNama;
         _akomodasiPreview = _mapPlanToPreview(widget.selectedPlan!);
+
+        // Load pesawat data
+        if (widget.selectedPlan!.transportasi != null && widget.selectedPlan!.transportasi!.isNotEmpty) {
+          _loadPesawatFromPlan(widget.selectedPlan!);
+        }
+        
+        // Load mobil data
+        if (widget.selectedPlan!.mobil != null && widget.selectedPlan!.mobil!.isNotEmpty) {
+          _loadMobilFromPlan(widget.selectedPlan!);
+        }
       });
+    }
+  }
+
+  // PERBAIKAN: Method untuk load pesawat dari plan dengan error handling
+  void _loadPesawatFromPlan(RencanaModel plan) {
+    try {
+      final pesawatBox = Hive.box<PesawatModel>('pesawatBox');
+      _selectedPesawat = pesawatBox.values.firstWhere(
+        (p) => p.nama == plan.transportasi,
+        orElse: () => PesawatModel(
+          nama: plan.transportasi ?? '',
+          asal: plan.asalPesawat ?? '',
+          tujuan: plan.tujuanPesawat ?? '',
+          kelas: plan.kelasPesawat ?? '',
+          harga: (plan.hargaPesawat ?? 0) ~/ int.parse(plan.people.isEmpty ? '1' : plan.people),
+          waktu: plan.waktuPesawat != null ? DateTime.tryParse(plan.waktuPesawat!) ?? DateTime.now() : DateTime.now(),
+          durasi: plan.durasiPesawat ?? 0,
+          imageBase64: plan.imagePesawat ?? '',
+        ),
+      );
+    } catch (e) {
+      print('Error loading pesawat: $e');
+    }
+  }
+
+  // PERBAIKAN: Method untuk load mobil dari plan dengan error handling
+  void _loadMobilFromPlan(RencanaModel plan) {
+    try {
+      final mobilBox = Hive.box<MobilModel>('mobilBox');
+      _selectedMobil = mobilBox.values.firstWhere(
+        (m) => m.merk == plan.mobil,
+        orElse: () => MobilModel(
+          merk: plan.mobil ?? '',
+          tipeMobil: plan.tipeMobil ?? '',
+          hargaSewa: plan.hargaMobil ?? 0,
+          jumlahPenumpang: plan.jumlahPenumpangMobil ?? '',
+          imageBase64: plan.imageMobil ?? '',
+        ),
+      );
+    } catch (e) {
+      print('Error loading mobil: $e');
     }
   }
 
@@ -198,6 +274,12 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     if (!Hive.isBoxOpen('kamarBox')) {
       await Hive.openBox<KamarModel>('kamarBox');
     }
+    if (!Hive.isBoxOpen('pesawatBox')) {
+      await Hive.openBox<PesawatModel>('pesawatBox');
+    }
+    if (!Hive.isBoxOpen('mobilBox')) {
+      await Hive.openBox<MobilModel>('mobilBox');
+    }
     _rencanaBox = Hive.box<RencanaModel>('rencanaBox');
   }
 
@@ -214,12 +296,10 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     setState(() {
       _imageBase64 = null;
       _akomodasiPreview = null;
-      _akomodasiSelected = false;
-      _transportasiSelected = false;
-      _aktivitasSelected = false;
-      _kulinerSelected = false;
       _selectedHotelNama = null;
       _selectedKamarNama = null;
+      _selectedPesawat = null;
+      _selectedMobil = null;
     });
   }
 
@@ -285,15 +365,64 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     );
   }
 
+  // PERBAIKAN: Method untuk update plan dari modal dengan kategori spesifik
+  void updatePlanFromModal(RencanaModel updatedPlan) {
+    setState(() {
+      _previewPlan = updatedPlan;
+      
+      // Update preview berdasarkan kategori yang ditambahkan
+      if (updatedPlan.akomodasi != null && updatedPlan.akomodasi!.isNotEmpty) {
+        _selectedHotelNama = updatedPlan.akomodasi;
+        _selectedKamarNama = updatedPlan.kamarNama;
+        _akomodasiPreview = _mapPlanToPreview(updatedPlan);
+      }
+      
+      if (updatedPlan.transportasi != null && updatedPlan.transportasi!.isNotEmpty) {
+        _loadPesawatFromPlan(updatedPlan);
+      }
+      
+      if (updatedPlan.mobil != null && updatedPlan.mobil!.isNotEmpty) {
+        _loadMobilFromPlan(updatedPlan);
+      }
+    });
+  }
+
   void _onAkomodasiTap() {
     widget.onCategoryTap?.call('Akomodasi');
   }
+
   void _onTransportasiTap() {
     widget.onCategoryTap?.call('Transportasi');
   }
+
+  void _setSelectedPesawat(PesawatModel pesawat) {
+    setState(() {
+      _selectedPesawat = pesawat;
+    });
+  }
+  
+  void _setSelectedMobil(MobilModel mobil) {
+    setState(() {
+      _selectedMobil = mobil;
+    });
+  }
+
+  void _onTransportasiDelete() {
+    setState(() {
+      _selectedPesawat = null;
+    });
+  }
+
+  void _onMobilDelete() {
+    setState(() {
+      _selectedMobil = null;
+    });
+  }
+
   void _onAktivitasTap() {
     widget.onCategoryTap?.call('Aktivitas Seru');
   }
+
   void _onKulinerTap() {
     widget.onCategoryTap?.call('Kuliner');
   }
@@ -321,7 +450,6 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
         _akomodasiPreview = null;
         _selectedHotelNama = null;
         _selectedKamarNama = null;
-        _akomodasiSelected = false;
       });
 
       if (_previewPlanIndex != null && _rencanaBox != null) {
@@ -338,10 +466,35 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     }
   }
 
-  /// Ambil total biaya dari previewPlan jika ada (untuk edit/preview), jika tidak fallback ke preview (baru buat)
   int get estimasiTotalBiaya {
-    if (_previewPlan?.biayaAkomodasi != null) return _previewPlan!.biayaAkomodasi!;
-    return _akomodasiPreview?.estimasiBiaya ?? 0;
+    int total = 0;
+    // Akomodasi
+    if (_akomodasiPreview != null && _akomodasiPreview!.estimasiBiaya != null) {
+      total += _akomodasiPreview!.estimasiBiaya!;
+    } else if (_previewPlan?.biayaAkomodasi != null) {
+      total += _previewPlan!.biayaAkomodasi!;
+    }
+    // Transportasi (Pesawat)
+    if (_selectedPesawat != null) {
+      int jumlahPenumpang = 1;
+      if (_peopleController.text.isNotEmpty) {
+        final n = int.tryParse(_peopleController.text.trim());
+        if (n != null && n > 0) jumlahPenumpang = n;
+      } else if (_previewPlan?.people != null && _previewPlan!.people.isNotEmpty) {
+        final n = int.tryParse(_previewPlan!.people.trim());
+        if (n != null && n > 0) jumlahPenumpang = n;
+      }
+      total += _selectedPesawat!.harga * jumlahPenumpang;
+    } else if (_previewPlan?.hargaPesawat != null) {
+      total += _previewPlan!.hargaPesawat!;
+    }
+    // Mobil
+    if (_selectedMobil != null) {
+      total += _selectedMobil!.hargaSewa;
+    } else if (_previewPlan?.hargaMobil != null) {
+      total += _previewPlan!.hargaMobil!;
+    }
+    return total;
   }
 
   void _savePlan() async {
@@ -366,6 +519,16 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
       return;
     }
 
+    int? hargaPesawat;
+    if (_selectedPesawat != null) {
+      int jumlahPenumpang = 1;
+      if (_peopleController.text.isNotEmpty) {
+        final n = int.tryParse(_peopleController.text.trim());
+        if (n != null && n > 0) jumlahPenumpang = n;
+      }
+      hargaPesawat = _selectedPesawat!.harga * jumlahPenumpang;
+    }
+
     final newPlan = RencanaModel(
       userId: widget.currentUser.email,
       name: name,
@@ -379,6 +542,19 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
       akomodasi: _selectedHotelNama,
       kamarNama: _selectedKamarNama,
       biayaAkomodasi: _akomodasiPreview?.estimasiBiaya,
+      transportasi: _selectedPesawat?.nama,
+      kelasPesawat: _selectedPesawat?.kelas,
+      hargaPesawat: hargaPesawat,
+      asalPesawat: _selectedPesawat?.asal,
+      tujuanPesawat: _selectedPesawat?.tujuan,
+      waktuPesawat: _selectedPesawat?.waktu.toIso8601String(),
+      durasiPesawat: _selectedPesawat?.durasi,
+      imagePesawat: _selectedPesawat?.imageBase64,
+      mobil: _selectedMobil?.merk,
+      tipeMobil: _selectedMobil?.tipeMobil,
+      hargaMobil: _selectedMobil?.hargaSewa,
+      jumlahPenumpangMobil: _selectedMobil?.jumlahPenumpang,
+      imageMobil: _selectedMobil?.imageBase64,
     );
 
     await _rencanaBox?.add(newPlan);
@@ -421,6 +597,16 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
       return;
     }
 
+    int? hargaPesawat;
+    if (_selectedPesawat != null) {
+      int jumlahPenumpang = 1;
+      if (_peopleController.text.isNotEmpty) {
+        final n = int.tryParse(_peopleController.text.trim());
+        if (n != null && n > 0) jumlahPenumpang = n;
+      }
+      hargaPesawat = _selectedPesawat!.harga * jumlahPenumpang;
+    }
+
     final updatedPlan = RencanaModel(
       userId: widget.currentUser.email,
       name: name,
@@ -434,6 +620,19 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
       akomodasi: _selectedHotelNama,
       kamarNama: _selectedKamarNama,
       biayaAkomodasi: _akomodasiPreview?.estimasiBiaya,
+      transportasi: _selectedPesawat?.nama,
+      kelasPesawat: _selectedPesawat?.kelas,
+      hargaPesawat: hargaPesawat,
+      asalPesawat: _selectedPesawat?.asal,
+      tujuanPesawat: _selectedPesawat?.tujuan,
+      waktuPesawat: _selectedPesawat?.waktu.toIso8601String(),
+      durasiPesawat: _selectedPesawat?.durasi,
+      imagePesawat: _selectedPesawat?.imageBase64,
+      mobil: _selectedMobil?.merk,
+      tipeMobil: _selectedMobil?.tipeMobil,
+      hargaMobil: _selectedMobil?.hargaSewa,
+      jumlahPenumpangMobil: _selectedMobil?.jumlahPenumpang,
+      imageMobil: _selectedMobil?.imageBase64,
     );
 
     await _rencanaBox?.putAt(_previewPlanIndex!, updatedPlan);
@@ -602,105 +801,152 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
     );
   }
 
-  Widget _akomodasiCardSection() {
-    if (_akomodasiPreview != null) {
-      return PreviewAkomodasiCard(
-        preview: _akomodasiPreview!,
-        onDelete: _onAkomodasiDelete,
-      );
-    }
-    return InkWell(
-      borderRadius: BorderRadius.circular(13),
-      onTap: _onAkomodasiTap,
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(vertical: 22),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(13),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0x15000000),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+  // Widget untuk card kategori kosong yang sesuai dengan gambar
+  Widget _buildEmptyCategoryCard({
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        elevation: 1,
+        shadowColor: Colors.black.withOpacity(0.1),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: Colors.grey[600],
+                    size: 24,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          children: const [
-            Icon(Icons.hotel, size: 38, color: Colors.grey),
-            SizedBox(height: 9),
-            Text(
-              "Belum ada akomodasi yang dipilih\n(Klik untuk pilih akomodasi)",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 15),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _plusCard({
-    required String title,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 6, bottom: 6),
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-          ),
+  Widget _akomodasiCardSection() {
+    final akomodasiPreviewToShow = _akomodasiPreview ??
+        (_previewPlan != null
+            ? _mapPlanToPreview(_previewPlan!)
+            : null);
+
+    if (akomodasiPreviewToShow != null) {
+      return PreviewAkomodasiCard(
+        preview: akomodasiPreviewToShow,
+        onDelete: _onAkomodasiDelete,
+      );
+    }
+    
+    return _buildEmptyCategoryCard(
+      title: "Akomodasi",
+      icon: Icons.hotel,
+      onTap: _onAkomodasiTap,
+    );
+  }
+
+  Widget _transportasiCardSection() {
+    final pesawatToShow = _selectedPesawat ?? (_previewPlan?.transportasi != null && _previewPlan!.transportasi!.isNotEmpty
+        ? _selectedPesawat // Sudah di-load di initState
+        : null);
+
+    final mobilToShow = _selectedMobil ?? (_previewPlan?.mobil != null && _previewPlan!.mobil!.isNotEmpty
+        ? _selectedMobil // Sudah di-load di initState
+        : null);
+
+    // Jika ada transportasi yang dipilih, tampilkan preview card
+    if ((pesawatToShow != null && pesawatToShow.nama.isNotEmpty) || 
+        (mobilToShow != null && mobilToShow.merk.isNotEmpty)) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: PreviewTransportasiCard(
+          pesawat: pesawatToShow,
+          mobil: mobilToShow,
+          onDeletePesawat: _onTransportasiDelete,
+          onDeleteMobil: _onMobilDelete,
+          onAddMobil: () {
+            widget.onCategoryTap?.call('Transportasi');
+          },
         ),
-        Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          child: Material(
-            color: isSelected ? const Color(0xFFDC2626).withOpacity(0.1) : Colors.white,
-            borderRadius: BorderRadius.circular(13),
-            elevation: 2,
-            shadowColor: Colors.black.withOpacity(0.09),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(13),
-              onTap: onTap,
-              child: Container(
-                height: 90,
-                width: double.infinity,
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 42,
-                      color: isSelected ? const Color(0xFFDC2626) : Colors.grey[400],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isSelected ? 'Dipilih' : 'Belum ada ${title.toLowerCase()} yang dipilih',
-                      style: TextStyle(
-                        color: isSelected ? const Color(0xFFDC2626) : Colors.grey[600],
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+      );
+    }
+
+    // Jika belum ada transportasi, tampilkan empty card
+    return _buildEmptyCategoryCard(
+      title: "Transportasi",
+      icon: Icons.flight,
+      onTap: _onTransportasiTap,
+    );
+  }
+
+  Widget _aktivitasCardSection() {
+    // Untuk sementara selalu tampilkan empty card karena belum ada data aktivitas
+    return _buildEmptyCategoryCard(
+      title: "Aktivitas",
+      icon: Icons.local_activity,
+      onTap: _onAktivitasTap,
+    );
+  }
+
+  Widget _kulinerCardSection() {
+    // Untuk sementara selalu tampilkan empty card karena belum ada data kuliner
+    return _buildEmptyCategoryCard(
+      title: "Kuliner",
+      icon: Icons.restaurant,
+      onTap: _onKulinerTap,
     );
   }
 
   Widget _estimationCard() {
+    int jumlahPenumpang = 1;
+    if (_peopleController.text.isNotEmpty) {
+      final n = int.tryParse(_peopleController.text.trim());
+      if (n != null && n > 0) jumlahPenumpang = n;
+    } else if (_previewPlan?.people != null && _previewPlan!.people.isNotEmpty) {
+      final n = int.tryParse(_previewPlan!.people.trim());
+      if (n != null && n > 0) jumlahPenumpang = n;
+    }
+    int hargaPesawat = 0;
+    if (_selectedPesawat != null) {
+      hargaPesawat = _selectedPesawat!.harga * jumlahPenumpang;
+    } else if (_previewPlan?.hargaPesawat != null) {
+      hargaPesawat = _previewPlan!.hargaPesawat!;
+    }
+    int hargaMobil = 0;
+    if (_selectedMobil != null) {
+      hargaMobil = _selectedMobil!.hargaSewa;
+    } else if (_previewPlan?.hargaMobil != null) {
+      hargaMobil = _previewPlan!.hargaMobil!;
+    }
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 8, bottom: 30),
@@ -727,20 +973,41 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
               const SizedBox(width: 7),
               const Expanded(child: Text('Akomodasi')),
               Text(
-                estimasiTotalBiaya > 0
-                    ? 'Rp ${NumberFormat.decimalPattern('id').format(estimasiTotalBiaya)}'
+                _akomodasiPreview != null && _akomodasiPreview!.estimasiBiaya != null
+                    ? 'Rp ${NumberFormat.decimalPattern('id').format(_akomodasiPreview!.estimasiBiaya!)}'
+                    : (_previewPlan?.biayaAkomodasi != null
+                        ? 'Rp ${NumberFormat.decimalPattern('id').format(_previewPlan!.biayaAkomodasi!)}'
+                        : 'Rp -'),
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(Icons.flight, size: 17, color: Colors.black45),
+              const SizedBox(width: 7),
+              const Expanded(child: Text('Pesawat')),
+              Text(
+                hargaPesawat > 0
+                    ? 'Rp ${NumberFormat.decimalPattern('id').format(hargaPesawat)} (x$jumlahPenumpang)'
                     : 'Rp -',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          const Row(
+          Row(
             children: [
-              Icon(Icons.directions_car, size: 17, color: Colors.black45),
-              SizedBox(width: 7),
-              Expanded(child: Text('Transportasi')),
-              Text('Rp -', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Icon(Icons.directions_car, size: 17, color: Colors.black45),
+              const SizedBox(width: 7),
+              const Expanded(child: Text('Mobil')),
+              Text(
+                hargaMobil > 0
+                    ? 'Rp ${NumberFormat.decimalPattern('id').format(hargaMobil)}'
+                    : 'Rp -',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -906,25 +1173,13 @@ class _NewPlanningPageBodyState extends State<NewPlanningPageBody> {
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
                 const SizedBox(height: 5),
+                
+                // Gunakan card kategori yang baru
                 _akomodasiCardSection(),
-                _plusCard(
-                  title: "Transportasi",
-                  icon: Icons.flight,
-                  isSelected: _transportasiSelected,
-                  onTap: _onTransportasiTap,
-                ),
-                _plusCard(
-                  title: "Aktivitas Seru",
-                  icon: Icons.surfing,
-                  isSelected: _aktivitasSelected,
-                  onTap: _onAktivitasTap,
-                ),
-                _plusCard(
-                  title: "Kuliner",
-                  icon: Icons.restaurant,
-                  isSelected: _kulinerSelected,
-                  onTap: _onKulinerTap,
-                ),
+                _transportasiCardSection(),
+                _aktivitasCardSection(),
+                _kulinerCardSection(),
+                
                 if (_isEditMode)
                   Container(
                     width: double.infinity,

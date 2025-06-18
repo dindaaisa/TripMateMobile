@@ -4,7 +4,17 @@ import '../shared/location_state.dart';
 
 class CustomHeader extends StatefulWidget {
   final List<String>? lokasiList;
-  const CustomHeader({super.key, this.lokasiList});
+  final void Function(String)? onSearchChanged;
+  final void Function(String)? onSearchSubmitted;
+
+  /// onSearchChanged: realtime update saat user ketik
+  /// onSearchSubmitted: ketika user submit/search
+  const CustomHeader({
+    super.key,
+    this.lokasiList,
+    this.onSearchChanged,
+    this.onSearchSubmitted,
+  });
 
   @override
   State<CustomHeader> createState() => _CustomHeaderState();
@@ -12,6 +22,7 @@ class CustomHeader extends StatefulWidget {
 
 class _CustomHeaderState extends State<CustomHeader> {
   late Future<List<String>> _lokasiListFuture;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -32,14 +43,17 @@ class _CustomHeaderState extends State<CustomHeader> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-
-    // Gunakan MediaQuery padding top agar header menempel ke atas device
     final topSafe = MediaQuery.of(context).padding.top;
-    final topBarHeight = 0.0; // Hilangkan padding topbar custom, pakai SafeArea saja
     final barHeight = screenWidth * 0.12;
-    final searchBoxHeight = screenWidth * 0.08 + 14;
+    final searchBoxHeight = screenWidth * 0.08 + 10;
 
     return FutureBuilder<List<String>>(
       future: _lokasiListFuture,
@@ -106,7 +120,7 @@ class _CustomHeaderState extends State<CustomHeader> {
                   ],
                 ),
               ),
-              // Search bar
+              // Search bar (rapih dan fungsi search)
               Padding(
                 padding: EdgeInsets.only(
                   top: 8,
@@ -117,39 +131,90 @@ class _CustomHeaderState extends State<CustomHeader> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Container(
+                      child: SizedBox(
                         height: searchBoxHeight,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: const Color(0xFFD3D5DD),
-                            width: 0.5,
-                          ),
-                        ),
-                        alignment: Alignment.centerLeft,
-                        child: const Text(
-                          'Temukan pengalaman liburanmu! Ketik sesuatu...',
-                          style: TextStyle(
-                            color: Color(0xFF8F98A8),
-                            fontSize: 11,
-                            fontFamily: 'Inter',
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: widget.onSearchChanged,
+                          onSubmitted: widget.onSearchSubmitted,
+                          textInputAction: TextInputAction.search,
+                          style: const TextStyle(fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: 'Temukan pengalaman liburanmu! Ketik sesuatu...',
+                            hintStyle: const TextStyle(
+                              color: Color(0xFF8F98A8),
+                              fontSize: 11,
+                              fontFamily: 'Inter',
+                            ),
+                            contentPadding: const EdgeInsets.only(left: 10, top: 0, bottom: 0, right: 6),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(7),
+                                bottomLeft: Radius.circular(7),
+                                topRight: Radius.zero,
+                                bottomRight: Radius.zero,
+                              ),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD3D5DD),
+                                width: 0.5,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(7),
+                                bottomLeft: Radius.circular(7),
+                                topRight: Radius.zero,
+                                bottomRight: Radius.zero,
+                              ),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD3D5DD),
+                                width: 0.5,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(7),
+                                bottomLeft: Radius.circular(7),
+                                topRight: Radius.zero,
+                                bottomRight: Radius.zero,
+                              ),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFDC2626),
+                                width: 1,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    Container(
-                      width: searchBoxHeight + 4,
+                    SizedBox(
                       height: searchBoxHeight,
-                      decoration: BoxDecoration(
+                      child: Material(
                         color: const Color(0xFFDC2626),
                         borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(6),
-                          bottomRight: Radius.circular(6),
+                          topRight: Radius.circular(7),
+                          bottomRight: Radius.circular(7),
+                        ),
+                        child: InkWell(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(7),
+                            bottomRight: Radius.circular(7),
+                          ),
+                          onTap: () {
+                            if (widget.onSearchSubmitted != null) {
+                              widget.onSearchSubmitted!(_searchController.text);
+                            }
+                          },
+                          child: Container(
+                            width: searchBoxHeight + 8,
+                            height: searchBoxHeight,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.search, size: 18, color: Colors.white),
+                          ),
                         ),
                       ),
-                      child: const Icon(Icons.search, size: 18, color: Colors.white),
                     ),
                   ],
                 ),

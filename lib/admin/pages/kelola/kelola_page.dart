@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'transportasi/kelola_pesawat.dart';
+import 'transportasi/kelola_mobil.dart';
+import 'tempat/kelola_kuliner.dart';
 import 'akomodasi/kelola_hotel.dart';
+import 'akomodasi/kelola_villa.dart';
+import 'tempat/kelola_aktivitas.dart';
 
 class KelolaPage extends StatefulWidget {
   const KelolaPage({Key? key}) : super(key: key);
@@ -17,25 +21,45 @@ class _KelolaPageState extends State<KelolaPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    if (selectedPage == 'Pesawat') {
-      return KelolaPesawatPage(
-        onBack: () => setState(() => selectedPage = null),
-      );
-    }
-    if (selectedPage == 'Hotel') {
-      return KelolaHotel(
-        onBack: () => setState(() => selectedPage = null),
-      );
+    // Routing ke halaman sesuai kategori yang diklik
+    switch (selectedPage) {
+      case 'Pesawat':
+        return KelolaPesawatPage(
+          onBack: () => setState(() => selectedPage = null),
+        );
+      case 'Mobil':
+        return KelolaMobilPage(
+          onBack: () => setState(() => selectedPage = null),
+        );
+      case 'Kuliner':
+        return KelolaKuliner(
+          onBack: () => setState(() => selectedPage = null),
+        );
+      case 'Hotel':
+        return KelolaHotel(
+          onBack: () => setState(() => selectedPage = null),
+        );
+      case 'Villa':
+        return KelolaVillaPage(
+          onBack: () => setState(() => selectedPage = null),
+        );
+      case 'Aktivitas':
+        return KelolaAktivitas(
+          onBack: () => setState(() => selectedPage = null),
+        );
     }
 
     // Menu utama KelolaPage
     return Scaffold(
       body: Column(
         children: [
-          // Responsive Header mirip AkunPage
+          // Header merah mentok ke atas
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: screenWidth * 0.06),
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top,
+              bottom: screenWidth * 0.06,
+            ),
             decoration: const BoxDecoration(
               color: Color(0xFFDC2626),
               borderRadius: BorderRadius.vertical(
@@ -69,9 +93,21 @@ class _KelolaPageState extends State<KelolaPage> {
                       svgPath: 'assets/icons/airplane.svg',
                       onTap: () => setState(() => selectedPage = 'Pesawat'),
                     ),
-                    GridItem(label: 'Mobil', svgPath: 'assets/icons/car.svg'),
-                    GridItem(label: 'Bus', svgPath: 'assets/icons/bus.svg'),
-                    GridItem(label: 'Kereta', svgPath: 'assets/icons/train.svg'),
+                    GridItem(
+                      label: 'Mobil',
+                      svgPath: 'assets/icons/car.svg',
+                      onTap: () => setState(() => selectedPage = 'Mobil'),
+                    ),
+                    GridItem(
+                      label: 'Bus',
+                      svgPath: 'assets/icons/bus.svg',
+                      // onTap: () => setState(() => selectedPage = 'Bus'),
+                    ),
+                    GridItem(
+                      label: 'Kereta',
+                      svgPath: 'assets/icons/train.svg',
+                      // onTap: () => setState(() => selectedPage = 'Kereta'),
+                    ),
                   ]),
                   const SizedBox(height: 20),
                   sectionTitle('Akomodasi'),
@@ -82,16 +118,32 @@ class _KelolaPageState extends State<KelolaPage> {
                       svgPath: 'assets/icons/hotel.svg',
                       onTap: () => setState(() => selectedPage = 'Hotel'),
                     ),
-                    GridItem(label: 'Vila', svgPath: 'assets/icons/vila.svg'),
-                    GridItem(label: 'Apartemen', svgPath: 'assets/icons/apartemen.svg'),
+                    GridItem(
+                      label: 'Villa',
+                      svgPath: 'assets/icons/vila.svg',
+                      onTap: () => setState(() => selectedPage = 'Villa'),
+                    ),
+                    GridItem(
+                      label: 'Apartemen',
+                      svgPath: 'assets/icons/apartemen.svg',
+                      // onTap: () => setState(() => selectedPage = 'Apartemen'),
+                    ),
                   ]),
                   const SizedBox(height: 20),
                   sectionTitle('Tempat'),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      GridItem(label: 'Makanan', svgPath: 'assets/icons/makanan.svg'),
-                      GridItem(label: 'Atraksi', svgPath: 'assets/icons/atraksi.svg'),
+                      GridItem(
+                        label: 'Kuliner',
+                        svgPath: 'assets/icons/makanan.svg',
+                        onTap: () => setState(() => selectedPage = 'Kuliner'),
+                      ),
+                      GridItem(
+                        label: 'Aktivitas',
+                        svgPath: 'assets/icons/atraksi.svg',
+                        onTap: () => setState(() => selectedPage = 'Aktivitas'),
+                      ),
                     ],
                   ),
                 ],

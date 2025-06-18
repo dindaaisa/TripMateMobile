@@ -10,6 +10,12 @@ import 'models/landing_page_model.dart';
 import 'models/rencana_model.dart';
 import 'models/hotel_model.dart';
 import 'models/kamar_model.dart';
+import 'models/kuliner_model.dart';
+import 'models/mobil_model.dart';
+import 'models/pesawat_model.dart';
+import 'models/villa_model.dart';
+import 'models/aktivitas_model.dart';
+import 'models/tiket_model.dart';
 
 // Screens umum
 import 'screens/onboarding/onboarding_screen.dart';
@@ -28,12 +34,12 @@ import 'shared/location_state.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi locale date format untuk intl, AGAR DateFormat('d MMM', 'id_ID') tidak error
+  // Inisialisasi locale date format untuk intl
   await initializeDateFormatting('id_ID', null);
 
   await Hive.initFlutter();
 
-  // Register Hive adapters
+  // Register Hive adapters (harus sebelum openBox!)
   if (!Hive.isAdapterRegistered(UserModelAdapter().typeId)) {
     Hive.registerAdapter(UserModelAdapter());
   }
@@ -55,8 +61,35 @@ void main() async {
   if (!Hive.isAdapterRegistered(KamarModelAdapter().typeId)) {
     Hive.registerAdapter(KamarModelAdapter());
   }
+  if (!Hive.isAdapterRegistered(KulinerModelAdapter().typeId)) {
+    Hive.registerAdapter(KulinerModelAdapter());
+  }
+  if (!Hive.isAdapterRegistered(MobilModelAdapter().typeId)) {
+    Hive.registerAdapter(MobilModelAdapter());
+  }
+  if (!Hive.isAdapterRegistered(PesawatModelAdapter().typeId)) {
+    Hive.registerAdapter(PesawatModelAdapter());
+  }
+  if (!Hive.isAdapterRegistered(VillaModelAdapter().typeId)) {
+    Hive.registerAdapter(VillaModelAdapter());
+    if (!Hive.isAdapterRegistered(AreaVillaModelAdapter().typeId)) {
+    Hive.registerAdapter(AreaVillaModelAdapter());
+  }
+  if (!Hive.isAdapterRegistered(VillaOptionsModelAdapter().typeId)) {
+    Hive.registerAdapter(VillaOptionsModelAdapter());
+  }
+  }
+  if (!Hive.isAdapterRegistered(AktivitasModelAdapter().typeId)) {
+    Hive.registerAdapter(AktivitasModelAdapter());
+  }
+  if (!Hive.isAdapterRegistered(TiketAktivitasModelAdapter().typeId)) {
+    Hive.registerAdapter(TiketAktivitasModelAdapter());
+  }
 
-  // Hapus box untuk development/debug mode (reset data)
+
+  // Hapus box hanya jika benar-benar perlu (misal sedang reset development)
+  // Jangan lakukan ini setiap run, cukup manual bila ingin reset database
+  
   if (kDebugMode) {
     await Hive.deleteBoxFromDisk('users');
     await Hive.deleteBoxFromDisk('activeUserBox');
@@ -67,7 +100,15 @@ void main() async {
     await Hive.deleteBoxFromDisk('kamarBox');
     await Hive.deleteBoxFromDisk('lokasiBox');
     await Hive.deleteBoxFromDisk('selectedLocationBox');
+    await Hive.deleteBoxFromDisk('kulinerBox');
+    await Hive.deleteBoxFromDisk('mobilBox');
+    await Hive.deleteBoxFromDisk('pesawatBox');
+    await Hive.deleteBoxFromDisk('villaBox');
+    await Hive.deleteBoxFromDisk('villaOptionsBox');
+    await Hive.deleteBoxFromDisk('aktivitasBox');
+    await Hive.deleteBoxFromDisk('tiketAktivitasBox');
   }
+  
 
   // Open all necessary boxes
   await Hive.openBox<UserModel>('users');
@@ -77,6 +118,13 @@ void main() async {
   await Hive.openBox<HotelModel>('hotelBox');
   await Hive.openBox<HotelOptionsModel>('hotelOptionsBox');
   await Hive.openBox<KamarModel>('kamarBox');
+  await Hive.openBox<KulinerModel>('kulinerBox');
+  await Hive.openBox<MobilModel>('mobilBox');
+  await Hive.openBox<PesawatModel>('pesawatBox');
+  await Hive.openBox<VillaModel>('villaBox');
+  await Hive.openBox<VillaOptionsModel>('villaOptionsBox');
+  await Hive.openBox<AktivitasModel>('aktivitasBox');
+  await Hive.openBox<TiketAktivitasModel>('tiketAktivitasBox');
   final lokasiBox = await Hive.openBox('lokasiBox');
   final selectedLocationBox = await Hive.openBox('selectedLocationBox');
 
@@ -111,7 +159,7 @@ void main() async {
   if (hotelOptionsBox.isEmpty) {
     final defaultFacilities = ['Wi-Fi', 'Breakfast', 'Kolam Renang', 'Gym', 'Parkir', 'AC'];
     final defaultBadges = ['Populer', 'Rekomendasi', 'Baru'];
-    final defaultTipe = ['Hotel', 'Villa'];
+    final defaultTipe = ['Hotel'];
 
     hotelOptionsBox.put(
       0,

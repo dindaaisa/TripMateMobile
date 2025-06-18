@@ -48,11 +48,9 @@ class _KelolaTipeKamarState extends State<KelolaTipeKamar> {
   ];
 
   final List<String> badgeList = [
-    "Superior",
-    "Deluxe",
-    "Suite",
-    "Populer",
-    "Promo",
+    "Termasuk Sarapan",
+    "Bebas Rokok",
+    "Gratis Pembatalan",
   ];
 
   final Map<String, IconData> fasilitasIconMap = {

@@ -5,7 +5,6 @@ import 'package:tripmate_mobile/models/rencana_model.dart';
 import 'package:tripmate_mobile/models/hotel_model.dart';
 import 'package:tripmate_mobile/models/kamar_model.dart';
 import 'package:hive/hive.dart';
-// Tambahkan import berikut:
 import 'package:tripmate_mobile/screens/rencana/konfirmasi_pembayaran.dart';
 
 class KonfirmasiRencanaPage extends StatelessWidget {
@@ -41,16 +40,17 @@ class KonfirmasiRencanaPage extends StatelessWidget {
     final formatter = NumberFormat.decimalPattern('id');
 
     return Scaffold(
-      backgroundColor: const Color(0xfff6f6f6),
+      backgroundColor: const Color(0xFFF5F5F5),
       extendBody: true,
       body: Stack(
         children: [
-          Column(
+          ListView(
+            padding: const EdgeInsets.only(bottom: 120),
             children: [
-              // HEADER -- SAMA PERSIS DENGAN new_planning.dart
+              // HEADER
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.only(top: 46, bottom: 24, left: 0, right: 0),
+                padding: const EdgeInsets.only(top: 46, bottom: 24),
                 decoration: const BoxDecoration(
                   color: Color(0xFFDC2626),
                   borderRadius: BorderRadius.vertical(
@@ -77,272 +77,79 @@ class KonfirmasiRencanaPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
-              // ISI CARD
+              const SizedBox(height: 16),
+              
+              // MAIN CARD
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.07),
+                        color: Colors.black.withOpacity(0.08),
                         blurRadius: 8,
-                        offset: const Offset(0, 3),
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Judul
-                      Text(
-                        '${rencana.name} (${rencana.sumDate} Hari${int.tryParse(rencana.sumDate) != null && int.parse(rencana.sumDate) > 1 ? ' ${(int.parse(rencana.sumDate) - 1)} Malam' : ''})',
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 17,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w700,
+                      // Header Card dengan judul
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF8F9FA),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          '${rencana.name} (${rencana.sumDate})',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 7),
-                      const Text(
-                        "Akomodasi",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 13,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w700,
+                      
+                      // Content
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // AKOMODASI SECTION
+                            if (rencana.akomodasi != null && rencana.akomodasi!.isNotEmpty)
+                              _buildAkomodasiSection(hotel, kamar, formatter),
+                            
+                            // TRANSPORTASI SECTION
+                            if (rencana.transportasi != null && rencana.transportasi!.isNotEmpty)
+                              _buildTransportasiSection(formatter),
+                            
+                            // MOBIL SECTION
+                            if (rencana.mobil != null && rencana.mobil!.isNotEmpty)
+                              _buildMobilSection(formatter),
+                            
+                            // TOTAL SECTION
+                            _buildTotalSection(formatter),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: hotel?.imageBase64 != null && hotel!.imageBase64.isNotEmpty
-                                ? Image.memory(
-                                    base64Decode(hotel!.imageBase64),
-                                    width: 95,
-                                    height: 95,
-                                    fit: BoxFit.cover,
-                                  )
-                                : rencana.imageBase64 != null && rencana.imageBase64!.isNotEmpty
-                                    ? Image.memory(
-                                        base64Decode(rencana.imageBase64!),
-                                        width: 95,
-                                        height: 95,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Container(
-                                        width: 95,
-                                        height: 95,
-                                        color: Colors.grey[300],
-                                        child: const Icon(Icons.hotel, color: Colors.white, size: 36),
-                                      ),
-                          ),
-                          const SizedBox(width: 13),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  hotel?.nama ?? rencana.akomodasi ?? "-",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'Inter',
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                if (hotel != null)
-                                  Row(
-                                    children: [
-                                      Icon(Icons.star, color: Colors.amber[700], size: 15),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        "${hotel.rating.toStringAsFixed(1)} (${hotel.reviewCount} reviews)",
-                                        style: const TextStyle(
-                                          color: Color(0xFF8F98A8),
-                                          fontSize: 11,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                if (hotel != null) ...[
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.hotel, color: Color(0xFFDC2626), size: 15),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        hotel.tipe,
-                                        style: const TextStyle(
-                                          color: Color(0xFFDC2626),
-                                          fontSize: 11.5,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 14, color: Color(0xFF8C8C8C)),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        hotel.lokasi,
-                                        style: const TextStyle(
-                                          color: Color(0xFF8C8C8C),
-                                          fontSize: 11,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                                if (kamar != null) ...[
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.meeting_room, size: 14, color: Color(0xFF8C8C8C)),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        "1 x ${kamar.nama}",
-                                        style: const TextStyle(
-                                          color: Color(0xFF8C8C8C),
-                                          fontSize: 11,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (kamar.tipeKasur.isNotEmpty)
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.king_bed, size: 14, color: Color(0xFF8C8C8C)),
-                                        const SizedBox(width: 3),
-                                        Flexible(
-                                          child: Text(
-                                            kamar.tipeKasur,
-                                            style: const TextStyle(
-                                              color: Color(0xFF8C8C8C),
-                                              fontSize: 11,
-                                              fontFamily: 'Inter',
-                                              fontWeight: FontWeight.w400,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  if (kamar.badges.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 3, bottom: 2),
-                                      child: Row(
-                                        children: kamar.badges.take(1).map((badge) {
-                                          return Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                            margin: const EdgeInsets.only(right: 6),
-                                            decoration: ShapeDecoration(
-                                              color: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                side: const BorderSide(
-                                                  width: 0.5,
-                                                  color: Color(0xFFDC2626),
-                                                ),
-                                                borderRadius: BorderRadius.circular(20),
-                                              ),
-                                            ),
-                                            child: Text(
-                                              badge,
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 9,
-                                                fontFamily: 'Inter',
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          const Icon(Icons.attach_money, size: 17, color: Colors.black54),
-                          const SizedBox(width: 3),
-                          const Text(
-                            "Total",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 12.5,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            "1 x Rp ${formatter.format(rencana.biayaAkomodasi ?? 0)}",
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 12.5,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 7),
-                      Row(
-                        children: [
-                          const Icon(Icons.account_balance_wallet, size: 17, color: Colors.black54),
-                          const SizedBox(width: 4),
-                          const Text(
-                            "Total Akomodasi",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 13,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            "Rp ${formatter.format(rencana.biayaAkomodasi ?? 0)}",
-                            style: const TextStyle(
-                              color: Color(0xFFDC2626),
-                              fontSize: 15,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
                 ),
               ),
-              // Spacer agar bar reserve tidak mepet card
-              const SizedBox(height: 26),
+              const SizedBox(height: 32),
             ],
           ),
-          // BarReserve floating di bawah, dengan SafeArea supaya tidak mepet home bar
+          
+          // Bottom Bar
           Positioned(
             left: 0,
             right: 0,
@@ -350,10 +157,11 @@ class KonfirmasiRencanaPage extends StatelessWidget {
             child: SafeArea(
               minimum: const EdgeInsets.only(bottom: 12),
               top: false,
-              child: BarReserve(
-                total: rencana.biayaAkomodasi ?? 0,
+              child: ModernBarReserve(
+                total: (rencana.biayaAkomodasi ?? 0) +
+                       (rencana.hargaPesawat ?? 0) +
+                       (rencana.hargaMobil ?? 0),
                 onKonfirmasi: () {
-                  // Navigasi ke halaman konfirmasi pembayaran
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -368,74 +176,472 @@ class KonfirmasiRencanaPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildAkomodasiSection(HotelModel? hotel, KamarModel? kamar, NumberFormat formatter) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Akomodasi",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Hotel Info Card
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE9ECEF)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hotel Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: hotel?.imageBase64 != null && hotel!.imageBase64.isNotEmpty
+                      ? Image.memory(
+                          base64Decode(hotel!.imageBase64),
+                          fit: BoxFit.cover,
+                        )
+                      : rencana.imageBase64 != null && rencana.imageBase64!.isNotEmpty
+                          ? Image.memory(
+                              base64Decode(rencana.imageBase64!),
+                              fit: BoxFit.cover,
+                            )
+                          : Container(
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.hotel, color: Colors.white, size: 30),
+                            ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              
+              // Hotel Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hotel?.nama ?? rencana.akomodasi ?? "-",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (hotel != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.star, color: Colors.amber[700], size: 14),
+                          const SizedBox(width: 2),
+                          Text(
+                            "${hotel.rating.toStringAsFixed(1)} (${hotel.reviewCount} reviews)",
+                            style: const TextStyle(
+                              color: Color(0xFF666666),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      _buildInfoRow(Icons.business, hotel.tipe),
+                      _buildInfoRow(Icons.location_on, hotel.lokasi),
+                    ],
+                    if (kamar != null) ...[
+                      _buildInfoRow(Icons.meeting_room, "1 x ${kamar.nama}"),
+                      if (kamar.tipeKasur.isNotEmpty)
+                        _buildInfoRow(Icons.king_bed, kamar.tipeKasur),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        const SizedBox(height: 12),
+        _buildPriceRow("Total", "1 x Rp ${formatter.format(rencana.biayaAkomodasi ?? 0)}"),
+        _buildTotalRow("Total Akomodasi", formatter.format(rencana.biayaAkomodasi ?? 0)),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildTransportasiSection(NumberFormat formatter) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Transportasi",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Flight Info Card
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE9ECEF)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.flight,
+                  color: Color(0xFFDC2626),
+                  size: 40,
+                ),
+              ),
+              const SizedBox(width: 12),
+              
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rencana.transportasi ?? "-",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (rencana.asalPesawat != null && rencana.tujuanPesawat != null)
+                      Text(
+                        "${rencana.asalPesawat} → ${rencana.tujuanPesawat}",
+                        style: const TextStyle(
+                          color: Color(0xFF666666),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    if (rencana.kelasPesawat != null)
+                      _buildInfoRow(Icons.airline_seat_recline_normal, "Kelas ${rencana.kelasPesawat}"),
+                    if (rencana.waktuPesawat != null)
+                      _buildInfoRow(Icons.access_time, 
+                        DateFormat('dd MMM yyyy, HH:mm').format(
+                          DateTime.tryParse(rencana.waktuPesawat!) ?? DateTime.now()
+                        )
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        const SizedBox(height: 12),
+        _buildPriceRow("Total", "${rencana.people} x Rp ${formatter.format((rencana.hargaPesawat ?? 0) ~/ int.parse(rencana.people.isEmpty ? '1' : rencana.people))}"),
+        _buildTotalRow("Total Transportasi", formatter.format(rencana.hargaPesawat ?? 0)),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildMobilSection(NumberFormat formatter) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Mobil Pribadi",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Car Info Card
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE9ECEF)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: rencana.imageMobil != null && rencana.imageMobil!.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(
+                          base64Decode(rencana.imageMobil!),
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.directions_car,
+                        color: Color(0xFFDC2626),
+                        size: 40,
+                      ),
+              ),
+              const SizedBox(width: 12),
+              
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rencana.mobil ?? "-",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (rencana.tipeMobil != null)
+                      _buildInfoRow(Icons.info_outline, rencana.tipeMobil!),
+                    if (rencana.jumlahPenumpangMobil != null)
+                      _buildInfoRow(Icons.people, "${rencana.jumlahPenumpangMobil}"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        const SizedBox(height: 12),
+        _buildPriceRow("Total", "1 x Rp ${formatter.format(rencana.hargaMobil ?? 0)}"),
+        _buildTotalRow("Total Transportasi", formatter.format(rencana.hargaMobil ?? 0)),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildTotalSection(NumberFormat formatter) {
+    final total = (rencana.biayaAkomodasi ?? 0) +
+                  (rencana.hargaPesawat ?? 0) +
+                  (rencana.hargaMobil ?? 0);
+    
+    return Column(
+      children: [
+        const Divider(thickness: 1),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFDC2626).withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDC2626).withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.receipt_long,
+                color: Color(0xFFDC2626),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                "Total Keseluruhan",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                "Rp ${formatter.format(total)}",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFDC2626),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 12, color: const Color(0xFF666666)),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF666666),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.attach_money, size: 16, color: Color(0xFF666666)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF666666),
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF666666),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalRow(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDC2626).withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.account_balance_wallet, size: 16, color: Color(0xFFDC2626)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            "Rp $value",
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFDC2626),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class BarReserve extends StatelessWidget {
+class ModernBarReserve extends StatelessWidget {
   final int total;
   final VoidCallback? onKonfirmasi;
 
-  const BarReserve({super.key, required this.total, this.onKonfirmasi});
+  const ModernBarReserve({super.key, required this.total, this.onKonfirmasi});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 90,
+      padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
-            blurRadius: 4,
+            blurRadius: 8,
             offset: Offset(0, -2),
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 16,
-            top: 25,
-            child: GestureDetector(
-              onTap: onKonfirmasi,
-              child: Container(
-                width: 180,
-                height: 42,
-                decoration: ShapeDecoration(
-                  color: const Color(0xFFDC2626),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(32),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Total Pembayaran',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF666666),
+                    ),
                   ),
+                  Text(
+                    'Rp ${NumberFormat.decimalPattern('id').format(total)}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            ElevatedButton(
+              onPressed: onKonfirmasi,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
                 ),
-                alignment: Alignment.center,
-                child: const Text(
-                  'Konfirmasi Pembayaran',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w700,
-                  ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Konfirmasi Pembayaran',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-          ),
-          Positioned(
-            left: 19,
-            top: 37,
-            child: Text(
-              'Rp ${NumberFormat.decimalPattern('id').format(total)}',
-              style: const TextStyle(
-                color: Color(0xFFDC2626),
-                fontSize: 16,
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -16,12 +16,12 @@ class KamarTersediaWidget extends StatefulWidget {
   final Function(String)? onKamarSelected;
 
   const KamarTersediaWidget({
-    super.key,
+    Key? key,
     required this.hotel,
     this.currentUser,
     this.selectedKamarNama,
     this.onKamarSelected,
-  });
+  }) : super(key: key);
 
   @override
   State<KamarTersediaWidget> createState() => _KamarTersediaWidgetState();
@@ -92,14 +92,17 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
     }
   }
 
-  /// Hitungan malam = selisih hari + 1 (dua tanggal = dua malam)
+  // PERBAIKAN: Logika perhitungan sesuai dengan new_planning.dart
   int getJumlahMalam() {
     if (rangeStart == null || rangeEnd == null) return 1;
     final diff = rangeEnd!.difference(rangeStart!).inDays;
+    // Jika diff = 0 (tanggal sama) = 1 malam
+    // Jika diff = 1 (2 tanggal berbeda) = 2 malam
+    // dst.
     return diff >= 0 ? diff + 1 : 1;
   }
 
-  /// Hitungan hari = jumlah malam + 1
+  // PERBAIKAN: Jumlah hari = jumlah malam + 1
   int getJumlahHari() {
     return getJumlahMalam() + 1;
   }
@@ -109,6 +112,13 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
     if (rangeEnd == null) return day == rangeStart;
     return (day.isAtSameMomentAs(rangeStart!) || day.isAtSameMomentAs(rangeEnd!)) ||
         (day.isAfter(rangeStart!) && day.isBefore(rangeEnd!));
+  }
+
+  // PERBAIKAN: Method untuk generate string sumDate yang konsisten
+  String getSumDateString() {
+    final jumlahHari = getJumlahHari();
+    final jumlahMalam = getJumlahMalam();
+    return "$jumlahHari Hari, $jumlahMalam Malam";
   }
 
   @override
@@ -131,6 +141,7 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
         : "${DateFormat('EEE, dd MMM', 'id_ID').format(rangeStart!)} - ${DateFormat('EEE, dd MMM', 'id_ID').format(rangeEnd!)}";
     final int jumlahMalam = getJumlahMalam();
     final int jumlahHari = getJumlahHari();
+    final String sumDateString = getSumDateString();
 
     Color getRangeBgColor() => const Color(0xFFDC2626).withOpacity(0.07);
 
@@ -243,7 +254,7 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "$tanggalStr ($jumlahHari Hari, $jumlahMalam Malam)",
+                      "$tanggalStr ($sumDateString)",
                       style: const TextStyle(
                         color: Color(0xFFDC2626),
                         fontWeight: FontWeight.w600,
@@ -398,7 +409,7 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "$jumlahHari Hari, $jumlahMalam Malam",
+                              sumDateString,
                               style: const TextStyle(
                                 color: Color(0xFFDC2626),
                                 fontSize: 12,
@@ -436,10 +447,10 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
 
                                   if (widget.onKamarSelected != null) {
                                     widget.onKamarSelected!(kamar.nama);
-                                  } else {
+                                  } else if (widget.currentUser != null) {
                                     final box = Hive.box<RencanaModel>('rencanaBox');
                                     final userPlans = box.values
-                                        .where((plan) => plan.userId == widget.currentUser?.email)
+                                        .where((plan) => plan.userId == widget.currentUser!.email)
                                         .toList();
 
                                     showTambahDalamRencanaModal(
@@ -447,32 +458,19 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                                       currentUser: widget.currentUser!,
                                       userPlans: userPlans,
                                       onPlanSelected: (RencanaModel selectedPlan) async {
-                                        final planStart = DateTime.tryParse(selectedPlan.startDate);
-                                        final planEnd = DateTime.tryParse(selectedPlan.endDate);
-
-                                        if (planStart == null || planEnd == null ||
-                                            planStart != rangeStart || planEnd != rangeEnd) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text("Tanggal rencana dan kamar harus sama!"),
-                                              backgroundColor: Colors.red,
-                                            ),
+                                        final planKey = selectedPlan.key;
+                                        if (planKey != null) {
+                                          final updatedPlan = selectedPlan.copyWith(
+                                            akomodasi: widget.hotel.nama,
+                                            kamarNama: kamar.nama,
+                                            biayaAkomodasi: totalHarga,
+                                            imageBase64: widget.hotel.imageBase64,
+                                            startDate: DateFormat('yyyy-MM-dd').format(rangeStart!),
+                                            endDate: DateFormat('yyyy-MM-dd').format(rangeEnd!),
+                                            sumDate: sumDateString, // PERBAIKAN: Gunakan string yang konsisten
                                           );
-                                          return;
-                                        }
-
-                                        final idx = selectedPlan.key as int;
-                                        final updatedPlan = selectedPlan.copyWith(
-                                          akomodasi: widget.hotel.nama,
-                                          kamarNama: kamar.nama,
-                                          biayaAkomodasi: totalHarga,
-                                          imageBase64: widget.hotel.imageBase64,
-                                          startDate: DateFormat('yyyy-MM-dd').format(rangeStart!),
-                                          endDate: DateFormat('yyyy-MM-dd').format(rangeEnd!),
-                                          sumDate: "$jumlahHari Hari $jumlahMalam Malam",
-                                        );
-                                        await box.putAt(idx, updatedPlan);
-                                        if (mounted) {
+                                          await box.put(planKey, updatedPlan);
+                                          if (!mounted) return;
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(content: Text("Kamar telah ditambahkan ke rencana '${selectedPlan.name}'")),
                                           );
@@ -491,6 +489,11 @@ class _KamarTersediaWidgetState extends State<KamarTersediaWidget> {
                                       },
                                       selectedStartDate: rangeStart!,
                                       selectedEndDate: rangeEnd!,
+                                      selectedKamar: kamar,
+                                      akomodasiNama: widget.hotel.nama,
+                                      imageAkomodasi: widget.hotel.imageBase64,
+                                      totalHargaAkomodasi: totalHarga,
+                                      sumAkomodasiDate: sumDateString, // PERBAIKAN: Gunakan string yang konsisten
                                     );
                                   }
                                 },

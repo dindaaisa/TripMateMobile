@@ -91,50 +91,52 @@ class DashboardPage extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: screenWidth * 0.06),
-              decoration: const BoxDecoration(
-                color: Color(0xFFDC2626),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(20),
-                ),
+      // Hapus SafeArea, lalu atur padding top manual pada bagian lain jika perlu
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header - mentok ke atas, padding top menyesuaikan status bar manual
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top,
+              bottom: screenWidth * 0.06,
+            ),
+            decoration: const BoxDecoration(
+              color: Color(0xFFDC2626),
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(20),
               ),
-              child: const Center(
-                child: Text(
-                  'Dashboard',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                  ),
+            ),
+            child: const Center(
+              child: Text(
+                'Dashboard',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
+          ),
 
-            SizedBox(height: screenWidth * 0.07),
+          SizedBox(height: screenWidth * 0.07),
 
-            // Statistik
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045),
-              child: Row(
-                children: [
-                  _buildStatCard('Total Pengguna Aktif', totalUsers, screenWidth),
-                  _buildStatCard('Total Itinerary Dibuat', totalItinerary, screenWidth),
-                ],
-              ),
+          // Statistik
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.045),
+            child: Row(
+              children: [
+                _buildStatCard('Total Pengguna Aktif', totalUsers, screenWidth),
+                _buildStatCard('Total Itinerary Dibuat', totalItinerary, screenWidth),
+              ],
             ),
+          ),
 
-            // Tombol navigasi
-            _buildNavigationCard(context, screenWidth),
-          ],
-        ),
+          // Tombol navigasi
+          _buildNavigationCard(context, screenWidth),
+        ],
       ),
     );
   }

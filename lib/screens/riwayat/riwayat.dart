@@ -37,7 +37,7 @@ class RiwayatPage extends StatelessWidget {
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xfff6f6f6),
+      backgroundColor: const Color(0xFFF5F5F5), // Sama dengan rencana.dart
       body: Column(
         children: [
           // Header
@@ -68,7 +68,7 @@ class RiwayatPage extends StatelessWidget {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.all(16), // Konsisten dengan rencana.dart
               children: [
                 ..._riwayatSection("Trip yang Sedang Berjalan", ongoingTrips),
                 ..._riwayatSection("Trip Mendatangmu", upcomingTrips),
@@ -86,24 +86,46 @@ class RiwayatPage extends StatelessWidget {
     return [
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        child: Text(
+          title, 
+          style: const TextStyle(
+            fontSize: 18, // Sama dengan rencana.dart
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
       ),
+      const SizedBox(height: 12), // Konsisten spacing
       if (trips.isEmpty)
-        const Padding(
-          padding: EdgeInsets.only(left: 4, top: 12, bottom: 14),
-          child: Text("Belum ada perjalanan.", style: TextStyle(color: Colors.grey)),
+        Padding(
+          padding: const EdgeInsets.only(top: 20, bottom: 14),
+          child: Center(
+            child: Text(
+              "Belum ada perjalanan.", 
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ),
       ...trips.map((trip) => Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: RencanaCardView(plan: trip),
+            child: ModernRiwayatCard(plan: trip), // Gunakan card yang sama
           )),
     ];
   }
 }
 
-class RencanaCardView extends StatelessWidget {
+// Card yang sama dengan ModernRencanaCard tapi untuk riwayat
+class ModernRiwayatCard extends StatelessWidget {
   final RencanaModel plan;
-  const RencanaCardView({super.key, required this.plan});
+
+  const ModernRiwayatCard({
+    super.key,
+    required this.plan,
+  });
 
   String formatTanggal(String tanggal) {
     try {
@@ -115,12 +137,102 @@ class RencanaCardView extends StatelessWidget {
     }
   }
 
+  // Method untuk menggabungkan multiple items dengan koma
+  String _combineItems(List<String?> items) {
+    final validItems = items.where((item) => item != null && item.trim().isNotEmpty).toList();
+    return validItems.isEmpty ? "-" : validItems.join(", ");
+  }
+
+  // Method untuk mendapatkan status badge berdasarkan tanggal
+  Widget _getStatusBadge() {
+    final now = DateTime.now();
+    final start = DateTime.tryParse(plan.startDate);
+    final end = DateTime.tryParse(plan.endDate);
+
+    if (start != null && end != null) {
+      if (start.isAfter(now)) {
+        // Trip mendatang
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.blue[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Text(
+            "Mendatang",
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.blue,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        );
+      } else if (end.isBefore(now)) {
+        // Trip selesai
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.green[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Text(
+            "Selesai",
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.green,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        );
+      } else {
+        // Trip sedang berjalan
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.orange[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Text(
+            "Sedang Berjalan",
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.orange,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        );
+      }
+    }
+
+    return const SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Gabungkan transportasi dan mobil jika keduanya ada
+    final transportasiItems = <String?>[];
+    if (plan.transportasi != null && plan.transportasi!.trim().isNotEmpty) {
+      transportasiItems.add(plan.transportasi);
+    }
+    if (plan.mobil != null && plan.mobil!.trim().isNotEmpty) {
+      transportasiItems.add(plan.mobil);
+    }
+    final transportasiText = _combineItems(transportasiItems);
+
+    // Gabungkan aktivitas dan kuliner jika keduanya ada
+    final aktivitasItems = <String?>[];
+    if (plan.aktivitasSeru != null && plan.aktivitasSeru!.trim().isNotEmpty) {
+      aktivitasItems.add(plan.aktivitasSeru);
+    }
+    if (plan.kuliner != null && plan.kuliner!.trim().isNotEmpty) {
+      aktivitasItems.add(plan.kuliner);
+    }
+    final aktivitasText = _combineItems(aktivitasItems);
+
     final akomodasi = (plan.akomodasi == null || plan.akomodasi!.trim().isEmpty) ? "-" : plan.akomodasi!;
-    final transportasi = (plan.transportasi == null || plan.transportasi!.trim().isEmpty) ? "-" : plan.transportasi!;
-    final aktivitasSeru = (plan.aktivitasSeru == null || plan.aktivitasSeru!.trim().isEmpty) ? "-" : plan.aktivitasSeru!;
-    final kuliner = (plan.kuliner == null || plan.kuliner!.trim().isEmpty) ? "-" : plan.kuliner!;
+
+    // Perhitungan total biaya
+    final int total = (plan.biayaAkomodasi ?? 0) + (plan.hargaPesawat ?? 0) + (plan.hargaMobil ?? 0);
 
     return Container(
       decoration: BoxDecoration(
@@ -128,14 +240,16 @@ class RencanaCardView extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Gambar persegi di sebelah kiri
           ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
@@ -143,7 +257,7 @@ class RencanaCardView extends StatelessWidget {
             ),
             child: SizedBox(
               width: 100,
-              height: 120,
+              height: 100,
               child: plan.imageBase64 != null && plan.imageBase64!.isNotEmpty
                   ? Image.memory(
                       base64Decode(plan.imageBase64!),
@@ -159,104 +273,112 @@ class RencanaCardView extends StatelessWidget {
                     ),
             ),
           ),
+          
+          // Konten di sebelah kanan
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    plan.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                  // Judul dengan status badge
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "${plan.name} (${plan.sumDate})",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      _getStatusBadge(),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Informasi dengan icon dalam satu baris
+                  if (akomodasi != "-")
+                    _buildInfoRow(
+                      icon: Icons.business,
+                      text: akomodasi,
+                      color: const Color(0xFF666666),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.hotel, size: 14, color: Color(0xFF666666)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          akomodasi,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF666666)),
-                        ),
-                      ),
-                    ],
-                  ),
+                  
+                  if (transportasiText != "-")
+                    _buildInfoRow(
+                      icon: Icons.flight,
+                      text: transportasiText,
+                      color: const Color(0xFF666666),
+                    ),
+                  
+                  if (aktivitasText != "-")
+                    _buildInfoRow(
+                      icon: Icons.restaurant,
+                      text: aktivitasText,
+                      color: const Color(0xFF666666),
+                    ),
+                  
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.flight, size: 14, color: Color(0xFF666666)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          transportasi,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF666666)),
-                        ),
-                      ),
-                    ],
+                  
+                  // Tanggal dan jumlah orang
+                  _buildInfoRow(
+                    icon: Icons.calendar_today,
+                    text: "${formatTanggal(plan.startDate)} - ${formatTanggal(plan.endDate)}",
+                    color: const Color(0xFF666666),
                   ),
+                  
+                  _buildInfoRow(
+                    icon: Icons.people,
+                    text: "${plan.people} orang",
+                    color: const Color(0xFF666666),
+                  ),
+                  
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.surfing, size: 14, color: Color(0xFF666666)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          aktivitasSeru,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF666666)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.restaurant, size: 14, color: Color(0xFF666666)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          kuliner,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF666666)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today, size: 12, color: Color(0xFF666666)),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${formatTanggal(plan.startDate)} - ${formatTanggal(plan.endDate)}",
-                        style: const TextStyle(fontSize: 10, color: Color(0xFF666666)),
-                      ),
-                      const SizedBox(width: 12),
-                      const Icon(Icons.people, size: 12, color: Color(0xFF666666)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${plan.people} orang',
-                        style: const TextStyle(fontSize: 10, color: Color(0xFF666666)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Tambahkan total harga
-                  Row(
-                    children: [
-                      const Icon(Icons.attach_money, size: 14, color: Color(0xFF666666)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Total: Rp ${NumberFormat.decimalPattern('id').format(plan.biayaAkomodasi ?? 0)}',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF666666), fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                  
+                  // Total biaya
+                  _buildInfoRow(
+                    icon: Icons.attach_money,
+                    text: "Total: Rp ${NumberFormat.decimalPattern('id').format(total)}",
+                    color: const Color(0xFFDC2626),
+                    isBold: true,
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String text,
+    required Color color,
+    bool isBold = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

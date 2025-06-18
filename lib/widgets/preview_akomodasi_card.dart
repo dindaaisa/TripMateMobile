@@ -228,29 +228,6 @@ class PreviewAkomodasiCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 9),
                       child: Row(
                         children: [
-                          if (onEdit != null)
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF0AA14),
-                                minimumSize: const Size(0, 36),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(22),
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 18),
-                                elevation: 0,
-                              ),
-                              icon: const Icon(Icons.edit, size: 18, color: Colors.white),
-                              label: const Text(
-                                "Edit",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              onPressed: onEdit,
-                            ),
-                          if (onEdit != null && onDelete != null) const SizedBox(width: 8),
                           if (onDelete != null)
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(

@@ -68,7 +68,7 @@ class KonfirmasiPembayaranPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('id');
-    final totalBiaya = rencana.biayaAkomodasi ?? 0;
+    final totalBiaya = (rencana.biayaAkomodasi ?? 0) + (rencana.hargaPesawat ?? 0) + (rencana.hargaMobil ?? 0);
 
     return Scaffold(
       backgroundColor: const Color(0xfff6f6f6),
